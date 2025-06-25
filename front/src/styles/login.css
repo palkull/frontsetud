@@ -1,0 +1,12 @@
+*{
+    padding: 0;
+    margin: 0;
+}
+
+#contenedor{
+    width: 100px;
+    height: 100px;
+    background-color: aquamarine;
+    position: relative;
+    
+}
