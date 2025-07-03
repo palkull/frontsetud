@@ -1,14 +1,18 @@
-import {Outlet} from 'react-router';
+import { Outlet } from "react-router";
 
 function Usuarios() {
-    return (
-        <>
-            <h1>Usuarios Page</h1>
-            <p>Welcome to the usuarios page!</p>
-            <Outlet />
-            
-        </>
-    );
+  return (
+    <>
+      <div className="layout">
+        <main className="layout-main bordered">
+          
+          <Outlet />
+        </main>
+        <footer className="layout-footer bordered">2022 KeepCoding</footer>
+      </div>
+      
+    </>
+  );
 }
 export default Usuarios;
 // This component can be used to display user-related information or manage user accounts.
