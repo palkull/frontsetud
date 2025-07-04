@@ -8,7 +8,7 @@ function Usuarios() {
 
       {/* Contenedor principal con grid: 1 columna en móvil, 4 columnas en md+ */}
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-        
+
         {/* Sidebar: ocupa 1 de 4 columnas */}
         <aside className="md:col-span-1">
           <ul className="text-left font-medium text-lg leading-none divide-y divide-blue-200 border-blue-200">
@@ -35,7 +35,7 @@ function Usuarios() {
                 </div>
               </Link>
             </li>
-            
+
           </ul>
         </aside>
 
@@ -44,10 +44,11 @@ function Usuarios() {
           <main className="p-4 bg-white dark:bg-gray-800 rounded shadow">
             <Outlet />
           </main>
-          <footer className="text-center text-sm text-gray-500 mt-4">2022 KeepCoding</footer>
         </section>
 
       </div>
+      <footer className="text-center text-sm text-gray-500 mt-4">2022 KeepCoding</footer>
+
     </>
   );
 }
