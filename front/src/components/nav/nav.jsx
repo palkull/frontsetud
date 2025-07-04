@@ -1,4 +1,5 @@
 // import './nav.css';
+import { Link } from "react-router-dom"; // Asegúrate de usar 'react-router-dom' en lugar de 'react-router'
 
 function Nav() {
   return (
@@ -12,15 +13,9 @@ function Nav() {
 
           {/* Menú de navegación */}
           <div className="hidden md:flex space-x-4">
-            <a href="#" className="text-gray-800 dark:text-white hover:text-blue-500">
-              Home
-            </a>
-            <a href="#" className="text-gray-800 dark:text-white hover:text-blue-500">
-              Features
-            </a>
-            <a href="#" className="text-gray-800 dark:text-white hover:text-blue-500">
-              Pricing
-            </a>
+            <Link to="/">Home</Link>
+            <Link to="/features">Features</Link>
+            <Link to="/pricing">Pricing</Link>
           </div>
 
           {/* Botón de menú hamburguesa para móviles */}
@@ -48,15 +43,9 @@ function Nav() {
 
       {/* Menú desplegable en dispositivos móviles */}
       <div className="md:hidden hidden px-4 pt-2 pb-4 space-y-1" id="mobile-menu">
-        <a href="#" className="block text-gray-800 dark:text-white hover:text-blue-500">
-          Home
-        </a>
-        <a href="#" className="block text-gray-800 dark:text-white hover:text-blue-500">
-          Features
-        </a>
-        <a href="#" className="block text-gray-800 dark:text-white hover:text-blue-500">
-          Pricing
-        </a>
+        <Link to="/">Home</Link>
+        <Link to="/features">Features</Link>
+        <Link to="/pricing">Pricing</Link>
       </div>
     </nav>
   );
