@@ -2,7 +2,7 @@ function Inicio() {
    return (
       <>
          <h1>Inicio Page</h1>
-         <p>Welcome to the inicio page!</p>
+         <p>Welcome to the ainicio page!</p>
       </>
    );
 }
