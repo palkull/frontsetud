@@ -18,7 +18,7 @@ function Addusers() {
    return (
       <>
          <h1 className='text-2xl font-bold'>Añadir Usuario</h1>
-         <p>Por favor, complete los detalles para añadir un nuevo usuario.</p>
+         <p className='text-gray-600'>Por favor, complete los detalles para añadir un nuevo usuario.</p>
          <form className="w-full max-w-lg" onSubmit={handleSubmit}>
             <div className="flex flex-wrap -mx-3 mb-6">
                <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
