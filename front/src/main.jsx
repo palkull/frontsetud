@@ -8,6 +8,7 @@ import DeleteUser from "./components/users/deleteusers.jsx";
 import Addusers from "./components/users/addusers.jsx";
 import Nav from "./components/nav/nav.jsx";
 import ConsultarUsuario from "./components/users/checkusers.jsx";
+import Search from "./components/users/searchuser.jsx";
 
 const root = document.getElementById("root");
 
@@ -21,6 +22,8 @@ ReactDOM.createRoot(root).render(
         <Route index element={<Addusers />} />
         <Route path="delete" element={<DeleteUser />} />
         <Route path="consultar" element={<ConsultarUsuario />} />
+        <Route path="buscar" element={<Search />} />
+        
       </Route>
     </Routes>
   </BrowserRouter>
