@@ -1,8 +1,30 @@
+import { Link } from "react-router";
+import Nav from "../../components/nav/nav";
+
+
+
 function Inicio() {
    return (
       <>
+         <Nav />
          <h1>Inicio Page</h1>
          <p>Welcome to the inicio page!</p>
+         <div className="grid grid-cols-3 gap-4 h-screen mt-10 pr-10 pl-10">
+            <Link className="bg-gray-200 p-4 rounded h-3/4 hover:text-black-600 hover:opacity-50 cursor-pointer">
+               <h2 className="text-lg font-semibold">Estudiantes</h2>
+               <p className="text-sm text-gray-600">Registra a los estudiantes extraordinarios</p>
+
+            </Link>
+
+            <Link className="bg-gray-200 p-4 rounded h-3/4 hover:text-black-600 hover:opacity-50 cursor-pointer">
+               <h2 className="text-lg font-semibold">Usuarios</h2>
+               <p className="text-sm text-gray-600">Gestiona a los usuarios aquí.</p>
+            </Link>
+            <Link to={"/cursos"} className="bg-gray-200 p-4 rounded h-3/4 hover:text-black-600 hover:opacity-50 cursor-pointer">
+               <h2 className="text-lg font-semibold">Cursos</h2>
+               <p className="text-sm text-gray-600">Explora y gestiona cursos.</p>
+            </Link>
+         </div>
       </>
    );
 }

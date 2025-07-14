@@ -32,7 +32,7 @@ function Login() {
           </button>
         </form>
         <div className="mt-4 text-center">
-          <Link to="/usuarios" className="text-blue-500 hover:underline">Go to Usuarios</Link>
+          <Link to="/inicio" className="text-blue-500 hover:underline">Go to Usuarios</Link>
         </div>
       </div>
     </div>
