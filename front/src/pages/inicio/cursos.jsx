@@ -1,10 +1,10 @@
-import { Link, Links, Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 import Nav from "../../components/nav/nav";
 
 
 export default function Cursos() {
-    return (
-        <>
+  return (
+    <>
       <Nav />
 
       {/* Contenedor principal con grid: 1 columna en móvil, 4 columnas en md+ */}
@@ -51,5 +51,5 @@ export default function Cursos() {
       <footer className="text-center text-sm text-gray-500 mt-4">2022 KeepCoding</footer>
 
     </>
-        );
+  );
 }

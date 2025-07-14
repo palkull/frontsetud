@@ -13,7 +13,7 @@ function Nav() {
 
           {/* Menú de navegación */}
           <div className="hidden md:flex space-x-4">
-            <Link to="/">Home</Link>
+            <Link to="/inicio">Home</Link>
             <Link to="/features">Features</Link>
             <Link to="/pricing">Pricing</Link>
           </div>
