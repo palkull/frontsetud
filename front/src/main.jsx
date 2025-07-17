@@ -29,7 +29,7 @@ ReactDOM.createRoot(root).render(
         <Route index element={<pages.AddEstudiante />} />
         <Route path="delete" element={<pages.DeleteEstudiante />} />
         <Route path="consultar" element={<pages.ListaEstudiantes />} />
-
+        <Route path="buscar" element={<pages.ConsultarEstudiante />} />
       </Route>
     </Routes>
   </BrowserRouter>
