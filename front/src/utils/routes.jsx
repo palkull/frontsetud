@@ -1,0 +1,14 @@
+export { default as Usuarios } from "../pages/inicio/usuarios.jsx";
+export { default as DeleteUser } from "../components/users/deleteusers.jsx";
+export { default as Addusers } from "../components/users/addusers.jsx";
+export { default as Nav } from "../components/nav/nav.jsx";
+export { default as ConsultarUsuario } from "../components/users/checkusers.jsx";
+export { default as Inicio } from "../pages/inicio/inicio.jsx";
+export { default as Cursos } from "../pages/inicio/cursos.jsx";
+export { default as AddCursos } from "../components/cursos/addcursos.jsx";
+export { default as Editcurso } from "../components/cursos/editcurso.jsx";
+export { default as DeleteCursos } from "../components/cursos/deletecursos.jsx";
+export { default as Estudiante } from "../pages/inicio/estudiantes.jsx";
+export { default as AddEstudiante } from "../components/estudiantes/addestudiante.jsx";
+export { default as DeleteEstudiante } from "../components/estudiantes/deleteestudiante.jsx";
+export { default as ListaEstudiantes } from "../components/estudiantes/listaestudiantes.jsx";
