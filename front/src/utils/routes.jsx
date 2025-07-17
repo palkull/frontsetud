@@ -12,3 +12,4 @@ export { default as Estudiante } from "../pages/inicio/estudiantes.jsx";
 export { default as AddEstudiante } from "../components/estudiantes/addestudiante.jsx";
 export { default as DeleteEstudiante } from "../components/estudiantes/deleteestudiante.jsx";
 export { default as ListaEstudiantes } from "../components/estudiantes/listaestudiantes.jsx";
+export { default as ConsultarEstudiante } from "../components/estudiantes/consultarestudiante.jsx";

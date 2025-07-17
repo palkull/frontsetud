@@ -35,7 +35,7 @@ function Search() {
       <>
          <h1 className='text-2xl font-bold'>Datos del Usuario</h1>
          <p className='text-gray-600'>Por favor, asegurese que los datos son los correctos.</p>
-         <form className="w-full max-w-lg" onSubmit={handleSubmit}>
+         <form className="bg-white dark:bg-gray-800 p-6 rounded shadow-md" onSubmit={handleSubmit}>
             <div className="flex flex-wrap -mx-3 mb-6">
                <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
                   <label
