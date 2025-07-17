@@ -24,7 +24,7 @@ const [fullName, setFullName] = useState('');
     <>
       <h1 className="text-2xl font-bold">Buscar Usuario</h1>
 
-      <form className="w-full max-w-sm mt-10" onSubmit={handleSubmit}>
+      <form className="bg-white dark:bg-gray-800 p-6 rounded shadow-md" onSubmit={handleSubmit}>
         <div className="md:flex md:items-center mb-6">
           <div className="md:w-1/3">
             <label

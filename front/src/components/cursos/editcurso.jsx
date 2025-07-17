@@ -4,7 +4,7 @@ export default function Editcurso() {
     <>
             <div className="container mx-auto px-4">
                 <h1 className="text-2xl font-bold mb-4">Buscar cursos</h1>
-                <form className="w-full max-w-auto mt-10" >
+                <form className="bg-white dark:bg-gray-800 p-6 rounded shadow-md" >
                     <div className="md:flex md:items-center mb-6 grid grid-cols-2 gap-4">
                         <div className="md:w-1/3 ">
                             <label
