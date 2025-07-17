@@ -3,7 +3,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import App from "./App.jsx";
 import "./index.css";
+
 import  *  as pages from "./utils/routes.jsx";
+
 
 const root = document.getElementById("root");
 
@@ -11,6 +13,7 @@ ReactDOM.createRoot(root).render(
   <BrowserRouter>
     <Routes>
       <Route index element={<App />} />
+
       <Route path="/inicio" element={<pages.Inicio />} />
       <Route path="/cursos" element={<pages.Cursos />} >
         <Route index element={<pages.AddCursos />} />
@@ -26,6 +29,7 @@ ReactDOM.createRoot(root).render(
         <Route index element={<pages.AddEstudiante />} />
         <Route path="delete" element={<pages.DeleteEstudiante />} />
         <Route path="consultar" element={<pages.ListaEstudiantes />} />
+
       </Route>
     </Routes>
   </BrowserRouter>

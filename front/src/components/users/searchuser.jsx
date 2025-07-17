@@ -1,25 +1,40 @@
 import { useState } from 'react';
 
-function Addusers() {
+function Search() {
    const [firstName, setFirstName] = useState('');
    const [showError, setShowError] = useState(false);
+     const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
 
    const handleSubmit = (e) => {
       e.preventDefault();
+
 
       if (firstName.trim() === '') {
          setShowError(true);
       } else {
          setShowError(false);
          // Aquí puedes enviar los datos si todo está bien
+
+         const confirmDelete = window.confirm(
+      `¿Estás seguro de que los datos del usuario \n\nNombre: ${fullName}\nCorreo: ${email} son correctos`
+    );
+
+    if (confirmDelete) {
+      alert('Usuario actualizado correctamente');
+      console.log('Usuario actualizado:', fullName, email);
+      // Aquí podrías hacer una llamada a la API para eliminarlo realmente
+    }
          console.log('Formulario válido');
       }
+
+      
    };
 
    return (
       <>
-         <h1 className='text-2xl font-bold'>Añadir Usuario</h1>
-         <p className='text-gray-600'>Por favor, complete los detalles para añadir un nuevo usuario.</p>
+         <h1 className='text-2xl font-bold'>Datos del Usuario</h1>
+         <p className='text-gray-600'>Por favor, asegurese que los datos son los correctos.</p>
          <form className="w-full max-w-lg" onSubmit={handleSubmit}>
             <div className="flex flex-wrap -mx-3 mb-6">
                <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -42,6 +57,7 @@ function Addusers() {
                      <p className="text-red-500 text-xs italic">Please fill out this field.</p>
                   )}
                </div>
+               
 
                <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
                   <label
@@ -142,5 +158,4 @@ function Addusers() {
    );
 }
 
-export default Addusers;
-// 
+export default Search;

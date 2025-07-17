@@ -1,7 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
+
+
 
 function ConsultarUsuario() {
-  const [fullName, setFullName] = useState('');
+const [fullName, setFullName] = useState('');
+
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e) => {
@@ -15,12 +19,11 @@ function ConsultarUsuario() {
       alert('Usuario eliminado correctamente');
       console.log('Usuario eliminado:', fullName, email);
       // Aquí podrías hacer una llamada a la API para eliminarlo realmente
-    }
-  };
-
-  return (
+    }}
+    return (
     <>
-      <h1 className="text-2xl font-bold">Consultar Usuario</h1>
+      <h1 className="text-2xl font-bold">Buscar Usuario</h1>
+
       <form className="w-full max-w-sm mt-10" onSubmit={handleSubmit}>
         <div className="md:flex md:items-center mb-6">
           <div className="md:w-1/3">
@@ -64,23 +67,27 @@ function ConsultarUsuario() {
           </div>
         </div>
 
-        {/* <div className="md:flex md:items-center mb-6">
+        <div className="md:flex md:items-center mb-6">
+
           <div className="md:w-1/3"></div>
           <label className="md:w-2/3 block text-gray-500 font-bold">
             <input className="mr-2 leading-tight" type="checkbox" />
             <span className="text-sm">Send me your newsletter!</span>
           </label>
-        </div> */}
+        </div>
+
 
         <div className="md:flex md:items-center">
           <div className="md:w-1/3"></div>
           <div className="md:w-2/3">
-            <button
+            <Link to={`/usuarios/buscar/${fullName}/${email}`}
+
               className="shadow bg-blue-500 hover:bg-blue-600 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
               type="submit"
             >
               Buscar Usuario
-            </button>
+            </Link>
+
           </div>
         </div>
       </form>
