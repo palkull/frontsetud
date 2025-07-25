@@ -1,63 +1,90 @@
-import { createContext, useState, useContext, useEffect } from 'react';
-import { registerRequest, loginRequest } from '../api/auth';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { registerRequest, loginRequest, verifyTokenRequest } from '../api/auth';
+import Cookies from 'js-cookie';
 
-export const AuthContext = createContext()
+export const AuthContext = createContext();
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-    return context; // <-- Agrega este return
-}
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
     const [admin, setAdmin] = useState(null);
     const [isAuth, setIsAuth] = useState(false);
     const [error, setError] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-
-    const signup = (admin) => {
-        // Aquí puedes implementar la lógica de registro
+    const signup = async (admin) => {
         try {
-            const res = registerRequest(admin);
-            console.log(res.data)
+            const res = await registerRequest(admin);
             setAdmin(res.data);
             setIsAuth(true);
         } catch (error) {
-            console.error('Error during signup:', error);
             setError([error.response ? error.response.data : 'An error occurred']);
-            console.log(error)
             setIsAuth(false); 
         }
-    }
+    };
 
     const login = async (admin) => {
-        // Aquí puedes implementar la lógica de inicio de sesión
         try {
             const res = await loginRequest(admin);
-            console.log(res.data)
+            setIsAuth(true);
+            setAdmin(res.data);
         } catch (error) {
-            console.error('Error during login:', error);
             setError([error.response ? error.response.data : 'An error occurred']);
             setIsAuth(false);
-            return;
         }
-    
-        // Aquí puedes manejar la respuesta del inicio de sesión
-    }
+    };
 
     useEffect(() => {
         if (error.length > 0) {
             const timer = setTimeout(() => {
-                setError([]); // Limpiar errores después de 5 segundos
+                setError([]);
             }, 5000);
-            return () => clearTimeout(timer); // Limpiar el timer al desmontar el componente
+            return () => clearTimeout(timer);
         }
-    }, [error])
+    }, [error]);
+
+    useEffect(() => {
+        async function checkLogin (){
+            const cookies = Cookies.get();
+            
+            if (!cookies.token) {
+                setIsAuth(false);
+                setLoading(false);
+                return setAdmin(null);
+                
+            }
+                
+                try {
+                    const res = await verifyTokenRequest(cookies.token);
+                    console.log(res);
+                    if (!res.data) {
+                        setIsAuth(false);
+                        setLoading(false);
+                        return;
+                    }
+
+                    setIsAuth(true);
+                    setAdmin(res.data);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Token verification failed:', error);
+                    setIsAuth(false);
+                    setAdmin(null);
+                    setLoading(false);
+                }
+            
+        };
+        checkLogin();
+    }, []);
 
     return (
-        <AuthContext.Provider value={{ 
+        <AuthContext.Provider value={{
             admin,
             setAdmin,
             signup,
@@ -65,8 +92,9 @@ export const AuthProvider = ({ children }) => {
             isAuth,
             setIsAuth,
             error,
-            setError
-            }}>
+            setError,
+            loading
+        }}>
             {children}
         </AuthContext.Provider>
     );

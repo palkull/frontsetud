@@ -5,7 +5,7 @@ import Estudiantes from "./pages/inicio/estudiantes";
 import Usuarios from "./pages/inicio/usuarios";
 import Cursos from "./pages/inicio/cursos";
 import { AuthProvider } from "./context/AuthContext";
-import { ProtectedRoutes } from "./protectedRoutes";
+import ProtectedRoutes from "./protectedRoutes";
 
 function App() {
   return (

@@ -1,9 +1,11 @@
 import { Link } from "react-router";
 import Nav from "../../components/nav/nav";
-
+import { useAuth } from "../../context/AuthContext";
 
 
 function Inicio() {
+   const {admin} = useAuth();
+   console.log('Inicio:', {admin});
    return (
       <>
          <Nav />
