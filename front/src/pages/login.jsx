@@ -1,17 +1,35 @@
-import { Link } from "react-router-dom"; // Asegúrate de usar 'react-router-dom' en lugar de 'react-router'
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const { login, error:loginErrors } = useAuth();
+  const { login, error: loginErrors, isAuth } = useAuth();
+  const navigate = useNavigate();
 
-  const onSubmit = handleSubmit(data => {
-    login(data);
-    console.log(data);
+  const onSubmit = handleSubmit(async data => {
+    await login(data);
+    // La alerta se muestra cuando isAuth cambia a true
   });
+
+  useEffect(() => {
+    if (isAuth) {
+      toast.success("¡Inicio de sesión correcto!", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setTimeout(() => navigate("/inicio"));
+    }
+  }, [isAuth, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
@@ -71,7 +89,7 @@ function Login() {
             Iniciar sesión
           </button>
         </form>
-
+        <ToastContainer />
       </div>
     </div>
   );

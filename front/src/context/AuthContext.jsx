@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { registerRequest, loginRequest, verifyTokenRequest } from '../api/auth';
 import Cookies from 'js-cookie';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -40,6 +40,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const logout = () => {
+        Cookies.remove('token');
+        setIsAuth(false);
+        setAdmin(null);
+
+    }
     useEffect(() => {
         if (error.length > 0) {
             const timer = setTimeout(() => {
@@ -93,7 +99,8 @@ export const AuthProvider = ({ children }) => {
             setIsAuth,
             error,
             setError,
-            loading
+            loading,
+            logout
         }}>
             {children}
         </AuthContext.Provider>
