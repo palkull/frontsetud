@@ -124,15 +124,6 @@ function Estudiantes() {
               </Link>
             </li>
             <li>
-              <Link to="consultar" className="py-3.5 w-full flex items-start text-blue-500 hover:text-blue-700 hover:bg-blue-50">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                <div>
-                  Consultar Estudiante 
-                  <span className="font-normal text-gray-500 text-sm block">(Avanzado)</span>
-                </div>
-              </Link>
-            </li>
-            <li>
               <label className="py-3.5 w-full flex items-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer">
                 <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
                 <div className="flex items-center gap-2">

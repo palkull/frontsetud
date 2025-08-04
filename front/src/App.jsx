@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/login";
 import Inicio from "./pages/inicio/inicio";
 import Participantes from "./pages/inicio/estudiantes";
-import AddEstudiante from "./components/estudiantes/addestudiante";
+import VerParticipante from "./components/estudiantes/verParticipante";
 
 import Usuarios from "./pages/inicio/usuarios";
 import AddUsuarios from "./components/users/addusers";
@@ -32,6 +32,7 @@ function App() {
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/estudiantes" element={<Participantes />} />
               <Route path="/add-participantes" element={<AddParticipantes />} />
+              <Route path="/verParticipante/:id" element={<VerParticipante />} />
               <Route path="/historial-participantes" element={<DeleteUsers />} />
 
               <Route path="/usuarios" element={<Usuarios />} />

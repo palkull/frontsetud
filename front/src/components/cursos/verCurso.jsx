@@ -17,10 +17,8 @@ function VerCurso() {
   const [searchParticipante, setSearchParticipante] = useState("");
   const navigate = useNavigate();
 
-  // Función memoizada para cargar datos del curso
   const loadCursoData = useCallback(async () => {
     if (!id) return;
-    
     try {
       setLoading(true);
       const cursoData = await getCurso(id);
@@ -33,9 +31,7 @@ function VerCurso() {
     }
   }, [id, getCurso]);
 
-  // Función memoizada para cargar participantes
   const loadParticipantes = useCallback(async () => {
-    // Solo cargar participantes si no están ya cargados o si está vacío
     if (!participantes || participantes.length === 0) {
       try {
         await getParticipantes();
@@ -45,47 +41,36 @@ function VerCurso() {
     }
   }, [participantes, getParticipantes]);
 
-  // Effect para cargar datos del curso (solo cuando cambie el ID)
   useEffect(() => {
     loadCursoData();
   }, [loadCursoData]);
 
-  // Effect separado para cargar participantes (solo una vez al montar el componente)
   useEffect(() => {
     loadParticipantes();
-  }, []); // Array vacío - solo se ejecuta una vez
+  }, []);
 
-  // Inscripción rápida - redirige a AddParticipante con el ID del curso
   const handleInscripcionRapida = () => {
     navigate(`/add-participantes?cursoId=${id}`);
   };
 
-  // Inscribir participantes existentes
   const handleInscribirExistentes = async () => {
     if (selectedParticipantes.length === 0) {
       toast.error("Selecciona al menos un participante");
       return;
     }
-
     try {
-      // Mostrar loading mientras se procesan las inscripciones
       const toastId = toast.loading(`Inscribiendo ${selectedParticipantes.length} participante(s)...`);
-      
       for (const participanteId of selectedParticipantes) {
         await inscribirParticipanteEnCurso(id, participanteId);
       }
-      
       toast.update(toastId, {
         render: `${selectedParticipantes.length} participante(s) inscrito(s) exitosamente`,
         type: "success",
         isLoading: false,
         autoClose: 3000
       });
-      
       setShowInscriptionModal(false);
       setSelectedParticipantes([]);
-      
-      // Refrescar solo los datos del curso
       await loadCursoData();
     } catch (error) {
       toast.error("Error al inscribir participantes");
@@ -93,7 +78,9 @@ function VerCurso() {
     }
   };
 
-  // Importar participantes desde Excel e inscribirlos automáticamente
+  // ==================================================================
+  // ========= FUNCIÓN MODIFICADA CON LAS VALIDACIONES =========
+  // ==================================================================
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -106,67 +93,96 @@ function VerCurso() {
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-      let importedCount = 0;
+      let newAndEnrolledCount = 0;
+      let existingEnrolledCount = 0;
+      let alreadyInCourseCount = 0;
       let errorCount = 0;
 
-      const toastId = toast.loading(`Procesando ${rows.length} participantes...`);
+      const toastId = toast.loading(`Procesando ${rows.length} registros del Excel...`);
 
       for (const row of rows) {
         try {
-          const participanteData = {
-            nombre: row.nombre || row.Nombre || row.NOMBRE,
-            empresaProdecendia: row.empresaProdecendia || row.empresa || row.Empresa || row.EMPRESA,
-            puesto: row.puesto || row.Puesto || row.PUESTO,
-            edad: parseInt(row.edad || row.Edad || row.EDAD),
-            correo: row.correo || row.email || row.Email || row.EMAIL,
-            telefono: row.telefono || row.Telefono || row.TELEFONO,
-            curp: row.curp || row.CURP || row.Curp
-          };
+          const curp = (row.curp || row.CURP || row.Curp)?.toString().trim().toUpperCase();
+          const correo = (row.correo || row.email || row.Email || row.EMAIL)?.toString().trim().toLowerCase();
 
-          // Crear participante
-          const newParticipante = await createParticipante(participanteData);
-          
-          // Inscribir automáticamente en el curso
-          await inscribirParticipanteEnCurso(id, newParticipante.data._id);
-          
-          importedCount++;
+          if (!curp && !correo) {
+            console.error("Fila omitida: No se proporcionó CURP ni Correo.", row);
+            errorCount++;
+            continue;
+          }
+
+          const yaInscrito = curso?.participantes?.some(pInscrito =>
+            pInscrito.participante_id?.curp === curp || pInscrito.participante_id?.correo === correo
+          );
+
+          if (yaInscrito) {
+            alreadyInCourseCount++;
+            console.log(`Participante ${row.nombre} (${curp || correo}) ya está inscrito. Omitiendo.`);
+            continue;
+          }
+
+          const participanteExistente = participantes.find(p =>
+            (curp && p.curp === curp) || (correo && p.correo === correo)
+          );
+
+          if (participanteExistente) {
+            await inscribirParticipanteEnCurso(id, participanteExistente._id);
+            existingEnrolledCount++;
+            console.log(`Participante existente ${participanteExistente.nombre} inscrito al curso.`);
+          } else {
+            const participanteData = {
+              nombre: row.nombre || row.Nombre || row.NOMBRE,
+              empresaProdecendia: row.empresaProdecendia || row.empresa || row.Empresa || row.EMPRESA,
+              puesto: row.puesto || row.Puesto || row.PUESTO,
+              edad: parseInt(row.edad || row.Edad || row.EDAD),
+              correo: correo,
+              telefono: (row.telefono || row.Telefono || row.TELEFONO)?.toString(),
+              curp: curp
+            };
+            const newParticipanteResponse = await createParticipante(participanteData);
+            await inscribirParticipanteEnCurso(id, newParticipanteResponse.data._id);
+            newAndEnrolledCount++;
+            console.log(`Nuevo participante ${participanteData.nombre} creado e inscrito.`);
+          }
         } catch (error) {
-          console.error("Error al importar participante:", error);
+          console.error("Error procesando una fila del Excel:", error, "Fila:", row);
           errorCount++;
         }
       }
 
-      // Actualizar toast con resultados
+      let summaryMessages = [];
+      if (newAndEnrolledCount > 0) summaryMessages.push(`${newAndEnrolledCount} nuevo(s) inscrito(s)`);
+      if (existingEnrolledCount > 0) summaryMessages.push(`${existingEnrolledCount} existente(s) inscrito(s)`);
+      if (alreadyInCourseCount > 0) summaryMessages.push(`${alreadyInCourseCount} ya estaba(n) en el curso`);
+      if (errorCount > 0) summaryMessages.push(`${errorCount} con error(es)`);
+      const finalMessage = summaryMessages.length > 0 ? `Proceso finalizado: ${summaryMessages.join(', ')}.` : "No se procesaron registros.";
+
       toast.update(toastId, {
-        render: `${importedCount} participantes importados e inscritos exitosamente${errorCount > 0 ? `. ${errorCount} errores` : ''}`,
-        type: importedCount > 0 ? "success" : "error",
+        render: finalMessage,
+        type: errorCount > 0 && (newAndEnrolledCount + existingEnrolledCount) === 0 ? "error" : "success",
         isLoading: false,
-        autoClose: 5000
+        autoClose: 6000
       });
 
-      // Refrescar datos del curso y participantes
       await Promise.all([
         loadCursoData(),
-        getParticipantes() // Refrescar participantes para actualizar la lista
+        getParticipantes()
       ]);
     };
     reader.readAsBinaryString(file);
-    
-    // Resetear el input file
     e.target.value = '';
   };
+  // =================== FIN DE LA FUNCIÓN MODIFICADA =================
 
-  // Filtrar participantes disponibles (no inscritos en este curso)
   const participantesDisponibles = participantes.filter(p => {
-    const yaInscrito = curso?.participantes?.some(cp => 
+    const yaInscrito = curso?.participantes?.some(cp =>
       cp.participante_id?._id === p._id || cp.participante_id === p._id
     );
     const matchesSearch = p.nombre?.toLowerCase().includes(searchParticipante.toLowerCase()) ||
-                         p.correo?.toLowerCase().includes(searchParticipante.toLowerCase());
+      p.correo?.toLowerCase().includes(searchParticipante.toLowerCase());
     return !yaInscrito && matchesSearch;
   });
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
@@ -178,7 +194,6 @@ function VerCurso() {
     );
   }
 
-  // Course not found
   if (!curso) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
@@ -280,12 +295,12 @@ function VerCurso() {
               <Info 
                 label="Participantes inscritos" 
                 value={participantesInscritos}
-                className={participantesInscritos >= curso.cupoMinimo ? "text-green-600" : "text-red-600"}
+                className={participantesInscritos >= curso.cupoMinimo ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}
               />
               <Info 
                 label="Cupos disponibles" 
                 value={cuposDisponibles}
-                className={cuposDisponibles > 0 ? "text-green-600" : "text-red-600"}
+                className={cuposDisponibles > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}
               />
             </div>
           </section>
@@ -294,8 +309,8 @@ function VerCurso() {
           <section>
             <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Costos y temario</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Info label="Costo" value={`$${curso.costo}`} />
-              <Info label="Costo general" value={`$${curso.costoGeneral}`} />
+              <Info label="Costo" value={curso.costo ? `$${curso.costo}` : null} />
+              <Info label="Costo general" value={curso.costoGeneral ? `$${curso.costoGeneral}`: null} />
             </div>
             <div className="mt-2">
               <Info label="Temario general" value={curso.temario} />
@@ -371,7 +386,7 @@ function VerCurso() {
                 placeholder="Buscar participante por nombre o correo..."
                 value={searchParticipante}
                 onChange={(e) => setSearchParticipante(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
               />
             </div>
 
@@ -388,7 +403,7 @@ function VerCurso() {
                         setSelectedParticipantes(selectedParticipantes.filter(id => id !== participante._id));
                       }
                     }}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                   />
                   <div>
                     <div className="font-medium text-gray-900 dark:text-gray-100">{participante.nombre}</div>
@@ -411,7 +426,7 @@ function VerCurso() {
               </button>
               <button
                 onClick={() => setShowInscriptionModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-600 transition"
               >
                 Cancelar
               </button>

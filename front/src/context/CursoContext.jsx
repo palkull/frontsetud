@@ -1,6 +1,6 @@
 import React, { useState, useContext, createContext } from 'react';
 import { addCursoRequest, getCursosRequest, deleteCursoRequest, inscribirParticipanteRequest, getCursoRequest } from '../api/auth.cursos';
-
+import { useCallback } from 'react';
 export const CursoContext = createContext();
 
 export const useCurso = () => {
@@ -67,7 +67,7 @@ export function CursoProvider({ children }) {
         }
     };
 
-    const inscribirParticipanteEnCurso = async (cursoId, participanteId) => {
+    const inscribirParticipanteEnCurso = useCallback(async (cursoId, participanteId) => {
     try {
         const res = await inscribirParticipanteRequest(cursoId, participanteId);
         return res;
@@ -75,7 +75,7 @@ export function CursoProvider({ children }) {
         setError([err.response ? err.response.data : 'Error al inscribir participante']);
         throw err;
     }
-};
+}, []);
     const deleteCurso = async (cursoId) => {
         try {
             await deleteCursoRequest({ id: cursoId });
@@ -85,7 +85,7 @@ export function CursoProvider({ children }) {
         }
     };
 
-    const getCurso = async (id) => {
+    const getCurso = useCallback(async (id) => {
         try {
             const res = await getCursoRequest(id);
             return res.data;
@@ -93,7 +93,7 @@ export function CursoProvider({ children }) {
             console.error("Error al obtener el curso:", error);
             throw error;
         }
-    };
+    }, []);
 
     return (
         <CursoContext.Provider value={{ 

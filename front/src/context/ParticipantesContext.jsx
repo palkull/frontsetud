@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext } from 'react';
+import React, { useState, useContext, createContext, useCallback } from 'react';
 import {getParticipanteRequest, getParticipantesRequest, addParticipanteRequest, deleteParticipanteRequest  } from '../api/auth.participantes';
 
 export const ParticipantesContext = createContext();
@@ -57,7 +57,7 @@ export function ParticipantesProvider({ children }) {
         }
     };
 
-    const getParticipantes = async () => {
+    const getParticipantes = useCallback(async () => {
         try {
             const res = await getParticipantesRequest();
             console.log('Participantes fetched:', res);
@@ -65,7 +65,7 @@ export function ParticipantesProvider({ children }) {
         } catch (error) {
             console.error(error)
         }
-    }
+    }, []);
 
     const deleteParticipante = async (participantId) => {
         try {
@@ -76,15 +76,15 @@ export function ParticipantesProvider({ children }) {
         }
     };
 
-    const getParticipante = async (id) => {
+    const getParticipante = useCallback(async (id) => {
         try {
             const res = await getParticipanteRequest(id);
             return res.data;
         } catch (error) {
             console.error("Error al obtener el participante:", error);
             throw error;
-        }
-    };
+        }   
+    }, []);
 
     return (
         <ParticipantesContext.Provider value={{
