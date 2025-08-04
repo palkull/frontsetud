@@ -1,5 +1,5 @@
 import React, { useState, useContext, createContext } from 'react';
-import { addCursoRequest, getCursosRequest, deleteCursoRequest, getCursoRequest } from '../api/auth.cursos';
+import { addCursoRequest, getCursosRequest, deleteCursoRequest, inscribirParticipanteRequest, getCursoRequest } from '../api/auth.cursos';
 
 export const CursoContext = createContext();
 
@@ -65,7 +65,17 @@ export function CursoProvider({ children }) {
         } catch (error) {
             console.error(error)
         }
+    };
+
+    const inscribirParticipanteEnCurso = async (cursoId, participanteId) => {
+    try {
+        const res = await inscribirParticipanteRequest(cursoId, participanteId);
+        return res;
+    } catch (err) {
+        setError([err.response ? err.response.data : 'Error al inscribir participante']);
+        throw err;
     }
+};
     const deleteCurso = async (cursoId) => {
         try {
             await deleteCursoRequest({ id: cursoId });
@@ -91,6 +101,7 @@ export function CursoProvider({ children }) {
             addCurso,
             getCursos,
             getCurso,
+            inscribirParticipanteEnCurso,
             deleteCurso,
             error
             }}>

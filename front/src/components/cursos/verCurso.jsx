@@ -1,27 +1,184 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCurso } from "../../context/CursoContext";
-import { FaArrowLeft } from "react-icons/fa";
+import { useParticipantes } from "../../context/ParticipantesContext";
+import { FaArrowLeft, FaUserPlus, FaFileExcel, FaUsers, FaEye } from "react-icons/fa";
+import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 
 function VerCurso() {
   const { id } = useParams();
-  const { getCurso } = useCurso();
+  const { getCurso, inscribirParticipanteEnCurso } = useCurso();
+  const { participantes, getParticipantes, createParticipante } = useParticipantes();
   const [curso, setCurso] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showInscriptionModal, setShowInscriptionModal] = useState(false);
+  const [selectedParticipantes, setSelectedParticipantes] = useState([]);
+  const [searchParticipante, setSearchParticipante] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchCurso() {
-      try {
-        const data = await getCurso(id);
-        setCurso(data);
-      } catch (error) {
-        console.error("Error al obtener el curso:", error);
-        setCurso(null);
-      }
+  // Función memoizada para cargar datos del curso
+  const loadCursoData = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const cursoData = await getCurso(id);
+      setCurso(cursoData);
+    } catch (error) {
+      console.error("Error loading curso:", error);
+      setCurso(null);
+    } finally {
+      setLoading(false);
     }
-    fetchCurso();
   }, [id, getCurso]);
 
+  // Función memoizada para cargar participantes
+  const loadParticipantes = useCallback(async () => {
+    // Solo cargar participantes si no están ya cargados o si está vacío
+    if (!participantes || participantes.length === 0) {
+      try {
+        await getParticipantes();
+      } catch (error) {
+        console.error("Error loading participantes:", error);
+      }
+    }
+  }, [participantes, getParticipantes]);
+
+  // Effect para cargar datos del curso (solo cuando cambie el ID)
+  useEffect(() => {
+    loadCursoData();
+  }, [loadCursoData]);
+
+  // Effect separado para cargar participantes (solo una vez al montar el componente)
+  useEffect(() => {
+    loadParticipantes();
+  }, []); // Array vacío - solo se ejecuta una vez
+
+  // Inscripción rápida - redirige a AddParticipante con el ID del curso
+  const handleInscripcionRapida = () => {
+    navigate(`/add-participantes?cursoId=${id}`);
+  };
+
+  // Inscribir participantes existentes
+  const handleInscribirExistentes = async () => {
+    if (selectedParticipantes.length === 0) {
+      toast.error("Selecciona al menos un participante");
+      return;
+    }
+
+    try {
+      // Mostrar loading mientras se procesan las inscripciones
+      const toastId = toast.loading(`Inscribiendo ${selectedParticipantes.length} participante(s)...`);
+      
+      for (const participanteId of selectedParticipantes) {
+        await inscribirParticipanteEnCurso(id, participanteId);
+      }
+      
+      toast.update(toastId, {
+        render: `${selectedParticipantes.length} participante(s) inscrito(s) exitosamente`,
+        type: "success",
+        isLoading: false,
+        autoClose: 3000
+      });
+      
+      setShowInscriptionModal(false);
+      setSelectedParticipantes([]);
+      
+      // Refrescar solo los datos del curso
+      await loadCursoData();
+    } catch (error) {
+      toast.error("Error al inscribir participantes");
+      console.error(error);
+    }
+  };
+
+  // Importar participantes desde Excel e inscribirlos automáticamente
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const data = evt.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      let importedCount = 0;
+      let errorCount = 0;
+
+      const toastId = toast.loading(`Procesando ${rows.length} participantes...`);
+
+      for (const row of rows) {
+        try {
+          const participanteData = {
+            nombre: row.nombre || row.Nombre || row.NOMBRE,
+            empresaProdecendia: row.empresaProdecendia || row.empresa || row.Empresa || row.EMPRESA,
+            puesto: row.puesto || row.Puesto || row.PUESTO,
+            edad: parseInt(row.edad || row.Edad || row.EDAD),
+            correo: row.correo || row.email || row.Email || row.EMAIL,
+            telefono: row.telefono || row.Telefono || row.TELEFONO,
+            curp: row.curp || row.CURP || row.Curp
+          };
+
+          // Crear participante
+          const newParticipante = await createParticipante(participanteData);
+          
+          // Inscribir automáticamente en el curso
+          await inscribirParticipanteEnCurso(id, newParticipante.data._id);
+          
+          importedCount++;
+        } catch (error) {
+          console.error("Error al importar participante:", error);
+          errorCount++;
+        }
+      }
+
+      // Actualizar toast con resultados
+      toast.update(toastId, {
+        render: `${importedCount} participantes importados e inscritos exitosamente${errorCount > 0 ? `. ${errorCount} errores` : ''}`,
+        type: importedCount > 0 ? "success" : "error",
+        isLoading: false,
+        autoClose: 5000
+      });
+
+      // Refrescar datos del curso y participantes
+      await Promise.all([
+        loadCursoData(),
+        getParticipantes() // Refrescar participantes para actualizar la lista
+      ]);
+    };
+    reader.readAsBinaryString(file);
+    
+    // Resetear el input file
+    e.target.value = '';
+  };
+
+  // Filtrar participantes disponibles (no inscritos en este curso)
+  const participantesDisponibles = participantes.filter(p => {
+    const yaInscrito = curso?.participantes?.some(cp => 
+      cp.participante_id?._id === p._id || cp.participante_id === p._id
+    );
+    const matchesSearch = p.nombre?.toLowerCase().includes(searchParticipante.toLowerCase()) ||
+                         p.correo?.toLowerCase().includes(searchParticipante.toLowerCase());
+    return !yaInscrito && matchesSearch;
+  });
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
+        <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-blue-700 dark:text-blue-400">Cargando curso...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  // Course not found
   if (!curso) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
@@ -40,6 +197,9 @@ function VerCurso() {
     );
   }
 
+  const participantesInscritos = curso.participantes?.length || 0;
+  const cuposDisponibles = curso.cupoMaximo - participantesInscritos;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800 relative">
       <button
@@ -50,99 +210,227 @@ function VerCurso() {
         <FaArrowLeft className="text-lg" />
         <span className="font-medium text-sm">Regresar</span>
       </button>
-      <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
-        <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center">{curso.nombre}</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Tipo:</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.tipo}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Modalidad:</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.modalidad}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Fecha inicio:</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.fechaInicio ? curso.fechaInicio.slice(0, 10) : ""}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Fecha fin:</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.fechaFin ? curso.fechaFin.slice(0, 10) : ""}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Horario:</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.horario}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Duración (horas):</span>
-            <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.duracion}</span>
-          </div>
+
+      <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-4xl border border-gray-200 dark:border-gray-700 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+        <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-8 text-center">{curso.nombre}</h1>
+        
+        {/* Botones de acción */}
+        <div className="flex flex-wrap gap-3 mb-8 justify-center">
+          <button
+            onClick={handleInscripcionRapida}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+          >
+            <FaUserPlus />
+            <span>Inscripción Rápida</span>
+          </button>
+          
+          <button
+            onClick={() => setShowInscriptionModal(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition"
+          >
+            <FaUsers />
+            <span>Inscribir Existentes</span>
+          </button>
+          
+          <label className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition cursor-pointer">
+            <FaFileExcel />
+            <span>Importar Excel</span>
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleImportExcel}
+              className="hidden"
+            />
+          </label>
         </div>
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">Instructor y objetivos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div className="space-y-8">
+          {/* Datos generales */}
+          <section>
+            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Datos generales</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Info label="Tipo" value={curso.tipo} />
+              <Info label="Modalidad" value={curso.modalidad} />
+              <Info label="Fecha inicio" value={curso.fechaInicio ? curso.fechaInicio.slice(0, 10) : ""} />
+              <Info label="Fecha fin" value={curso.fechaFin ? curso.fechaFin.slice(0, 10) : ""} />
+              <Info label="Horario" value={curso.horario} />
+              <Info label="Duración (horas)" value={curso.duracion} />
+            </div>
+          </section>
+
+          {/* Instructor y objetivos */}
+          <section>
+            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Instructor y objetivos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Info label="Instructor" value={curso.instructor} />
+              <Info label="Perfil del instructor" value={curso.perfilInstructor} />
+            </div>
+            <div className="mt-2">
+              <Info label="Objetivos" value={curso.objetivos} />
+            </div>
+          </section>
+
+          {/* Participantes y cupos */}
+          <section>
+            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Participantes y cupos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Info label="Perfil del participante" value={curso.perfilParticipante} />
+              <Info label="Cupo mínimo" value={curso.cupoMinimo} />
+              <Info label="Cupo máximo" value={curso.cupoMaximo} />
+              <Info 
+                label="Participantes inscritos" 
+                value={participantesInscritos}
+                className={participantesInscritos >= curso.cupoMinimo ? "text-green-600" : "text-red-600"}
+              />
+              <Info 
+                label="Cupos disponibles" 
+                value={cuposDisponibles}
+                className={cuposDisponibles > 0 ? "text-green-600" : "text-red-600"}
+              />
+            </div>
+          </section>
+
+          {/* Costos y temario */}
+          <section>
+            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Costos y temario</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Info label="Costo" value={`$${curso.costo}`} />
+              <Info label="Costo general" value={`$${curso.costoGeneral}`} />
+            </div>
+            <div className="mt-2">
+              <Info label="Temario general" value={curso.temario} />
+            </div>
+          </section>
+
+          {/* Proceso de inscripción */}
+          <section>
+            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Proceso de inscripción</h2>
             <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Instructor:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.instructor}</span>
+              <Info label="Proceso de inscripción" value={curso.procesoInscripcion} />
             </div>
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Perfil del instructor:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.perfilInstructor}</span>
-            </div>
-            <div className="md:col-span-2">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Objetivos:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.objetivos}</span>
-            </div>
-          </div>
-        </div>
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">Participantes y cupos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Perfil del participante:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.perfilParticipante}</span>
-            </div>
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Cupo mínimo:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.cupoMinimo}</span>
-            </div>
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Cupo máximo:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.cupoMaximo}</span>
-            </div>
-          </div>
-        </div>
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">Costos y temario</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Costo:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.costo}</span>
-            </div>
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Costo general:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.costoGeneral}</span>
-            </div>
-            <div className="md:col-span-2">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Temario general:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.temario}</span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-2">Proceso y contacto</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Proceso de inscripción:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.procesoInscripcion}</span>
-            </div>
-            <div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Correo:</span>
-              <span className="ml-2 text-gray-700 dark:text-gray-300">{curso.correo}</span>
-            </div>
-          </div>
+          </section>
+
+          {/* Lista de participantes inscritos */}
+          {participantesInscritos > 0 && (
+            <section>
+              <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">
+                Lista de participantes ({participantesInscritos})
+              </h2>
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-60 overflow-y-auto">
+                {curso.participantes.map((participante, index) => (
+                  <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                    <div>
+                      <span className="text-gray-700 dark:text-gray-200 font-medium">
+                        {participante.participante_id?.nombre || `Participante ${index + 1}`}
+                      </span>
+                      <br />
+                      <span className="text-sm text-gray-500">
+                        {participante.participante_id?.correo}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        participante.estado === 'inscrito' ? 'bg-blue-100 text-blue-800' :
+                        participante.estado === 'completado' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {participante.estado}
+                      </span>
+                      <br />
+                      <span className="text-xs text-gray-400">
+                        {new Date(participante.fecha_inscripcion).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
+
+      {/* Modal para inscribir participantes existentes */}
+      {showInscriptionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-blue-700 dark:text-blue-400">
+                Inscribir Participantes Existentes
+              </h3>
+              <button
+                onClick={() => setShowInscriptionModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Buscar participante por nombre o correo..."
+                value={searchParticipante}
+                onChange={(e) => setSearchParticipante(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
+              {participantesDisponibles.map(participante => (
+                <label key={participante._id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+                  <input
+                    type="checkbox"
+                    checked={selectedParticipantes.includes(participante._id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedParticipantes([...selectedParticipantes, participante._id]);
+                      } else {
+                        setSelectedParticipantes(selectedParticipantes.filter(id => id !== participante._id));
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-gray-100">{participante.nombre}</div>
+                    <div className="text-sm text-gray-500">{participante.correo} - {participante.empresaProdecendia}</div>
+                  </div>
+                </label>
+              ))}
+              {participantesDisponibles.length === 0 && (
+                <p className="text-gray-500 text-center py-4">No hay participantes disponibles</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleInscribirExistentes}
+                disabled={selectedParticipantes.length === 0}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition"
+              >
+                Inscribir Seleccionados ({selectedParticipantes.length})
+              </button>
+              <button
+                onClick={() => setShowInscriptionModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para mostrar cada dato con etiqueta y valor
+function Info({ label, value, className }) {
+  return (
+    <div className="flex flex-col mb-2">
+      <span className="text-xs font-semibold text-blue-500 dark:text-blue-300 uppercase">{label}</span>
+      <span className={`text-base ${className || 'text-gray-700 dark:text-gray-200'}`}>
+        {value || <span className="italic text-gray-400">Sin información</span>}
+      </span>
     </div>
   );
 }

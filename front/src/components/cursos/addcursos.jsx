@@ -12,7 +12,17 @@ function AddCursos() {
 
     const onSubmit = handleSubmit(async (data) => {
         try {
-            await addCurso(data);
+            // Convertir números de string a Number para que coincidan con el backend
+            const formattedData = {
+                ...data,
+                duracion: Number(data.duracion),
+                cupoMinimo: Number(data.cupoMinimo),
+                cupoMaximo: Number(data.cupoMaximo),
+                costo: Number(data.costo),
+                costoGeneral: Number(data.costoGeneral)
+            };
+            
+            await addCurso(formattedData);
             toast.success("¡Curso registrado correctamente!", {
                 position: "top-center",
                 autoClose: 2000,
@@ -24,7 +34,8 @@ function AddCursos() {
             reset();
             setTimeout(() => navigate("/cursos"), 2100);
         } catch (error) {
-            toast.error("Hubo un error al registrar el curso.", error);
+            toast.error("Hubo un error al registrar el curso.");
+            console.error(error);
         }
     });
 
@@ -92,9 +103,8 @@ function AddCursos() {
                                     type="text"
                                     placeholder="Horario"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("horario", { required: "El horario es obligatorio" })}
+                                    {...register("horario")}
                                 />
-                                {errors.horario && <span className="text-red-500 text-xs">{errors.horario.message}</span>}
                             </div>
                             <div>
                                 <input
@@ -105,18 +115,18 @@ function AddCursos() {
                                 />
                                 {errors.duracion && <span className="text-red-500 text-xs">{errors.duracion.message}</span>}
                             </div>
-                            <div>
-                                <select
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("modalidad", { required: "La modalidad es obligatoria" })}
-                                >
-                                    <option value="">Modalidad</option>
-                                    <option value="presencial">Presencial</option>
-                                    <option value="online">Online</option>
-                                    <option value="hibrido">Híbrido</option>
-                                </select>
-                                {errors.modalidad && <span className="text-red-500 text-xs">{errors.modalidad.message}</span>}
-                            </div>
+                                <div>
+                                    <select
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
+                                        {...register("modalidad", { required: "La modalidad es obligatoria" })}
+                                    >
+                                        <option value="">Modalidad</option>
+                                        <option value="presencial">Presencial</option>
+                                        <option value="online">Online</option>
+                                        <option value="hibrido">Híbrido</option>
+                                    </select>
+                                    {errors.modalidad && <span className="text-red-500 text-xs">{errors.modalidad.message}</span>}
+                                </div>
                         </div>
                     </div>
                     {/* Instructor y objetivos */}
@@ -137,14 +147,13 @@ function AddCursos() {
                                     type="text"
                                     placeholder="Perfil del instructor"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("perfilInstructor", { required: "El perfil del instructor es obligatorio" })}
+                                    {...register("perfilInstructor")}
                                 />
-                                {errors.perfilInstructor && <span className="text-red-500 text-xs">{errors.perfilInstructor.message}</span>}
                             </div>
-                            <div>
-                                <input
-                                    type="text"
-                                    placeholder="Objetivos"
+                            <div className="md:col-span-2">
+                                <textarea
+                                    placeholder="Objetivos del curso"
+                                    rows="3"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
                                     {...register("objetivos", { required: "Los objetivos son obligatorios" })}
                                 />
@@ -161,16 +170,20 @@ function AddCursos() {
                                     type="text"
                                     placeholder="Perfil del participante"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("perfilParticipante", { required: "El perfil del participante es obligatorio" })}
+                                    {...register("perfilParticipante")}
                                 />
-                                {errors.perfilParticipante && <span className="text-red-500 text-xs">{errors.perfilParticipante.message}</span>}
                             </div>
+                            <div></div>
                             <div>
                                 <input
                                     type="number"
                                     placeholder="Cupo mínimo"
+                                    min="1"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("cupoMinimo", { required: "El cupo mínimo es obligatorio" })}
+                                    {...register("cupoMinimo", { 
+                                        required: "El cupo mínimo es obligatorio",
+                                        min: { value: 1, message: "El cupo mínimo debe ser al menos 1" }
+                                    })}
                                 />
                                 {errors.cupoMinimo && <span className="text-red-500 text-xs">{errors.cupoMinimo.message}</span>}
                             </div>
@@ -178,8 +191,12 @@ function AddCursos() {
                                 <input
                                     type="number"
                                     placeholder="Cupo máximo"
+                                    min="1"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("cupoMaximo", { required: "El cupo máximo es obligatorio" })}
+                                    {...register("cupoMaximo", { 
+                                        required: "El cupo máximo es obligatorio",
+                                        min: { value: 1, message: "El cupo máximo debe ser al menos 1" }
+                                    })}
                                 />
                                 {errors.cupoMaximo && <span className="text-red-500 text-xs">{errors.cupoMaximo.message}</span>}
                             </div>
@@ -193,8 +210,13 @@ function AddCursos() {
                                 <input
                                     type="number"
                                     placeholder="Costo"
+                                    min="0"
+                                    step="0.01"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("costo", { required: "El costo es obligatorio" })}
+                                    {...register("costo", { 
+                                        required: "El costo es obligatorio",
+                                        min: { value: 0, message: "El costo no puede ser negativo" }
+                                    })}
                                 />
                                 {errors.costo && <span className="text-red-500 text-xs">{errors.costo.message}</span>}
                             </div>
@@ -202,15 +224,20 @@ function AddCursos() {
                                 <input
                                     type="number"
                                     placeholder="Costo general"
+                                    min="0"
+                                    step="0.01"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("costoGeneral", { required: "El costo general es obligatorio" })}
+                                    {...register("costoGeneral", { 
+                                        required: "El costo general es obligatorio",
+                                        min: { value: 0, message: "El costo general no puede ser negativo" }
+                                    })}
                                 />
                                 {errors.costoGeneral && <span className="text-red-500 text-xs">{errors.costoGeneral.message}</span>}
                             </div>
-                            <div>
-                                <input
-                                    type="text"
-                                    placeholder="Temario general"
+                            <div className="md:col-span-2">
+                                <textarea
+                                    placeholder="Temario del curso"
+                                    rows="4"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
                                     {...register("temario", { required: "El temario es obligatorio" })}
                                 />
@@ -218,36 +245,25 @@ function AddCursos() {
                             </div>
                         </div>
                     </div>
-                    {/* Proceso y contacto */}
+                    {/* Proceso de inscripción */}
                     <div>
-                        <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4">Proceso y contacto</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <input
-                                    type="text"
-                                    placeholder="Proceso de inscripción"
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("procesoInscripcion", { required: "El proceso de inscripción es obligatorio" })}
-                                />
-                                {errors.procesoInscripcion && <span className="text-red-500 text-xs">{errors.procesoInscripcion.message}</span>}
-                            </div>
-                            <div>
-                                <input
-                                    type="email"
-                                    placeholder="Correo"
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("correo", { required: "El correo es obligatorio" })}
-                                />
-                                {errors.correo && <span className="text-red-500 text-xs">{errors.correo.message}</span>}
-                            </div>
+                        <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4">Proceso de inscripción</h2>
+                        <div>
+                            <textarea
+                                placeholder="Describe el proceso de inscripción"
+                                rows="3"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
+                                {...register("procesoInscripcion")}
+                            />
                         </div>
                     </div>
+                    
                     <div>
                         <button
                             type="submit"
                             className="w-full bg-blue-600 hover:bg-blue-800 text-white font-semibold px-4 py-3 rounded-xl shadow transition duration-300 focus:outline-none mt-4"
                         >
-                            Registrar
+                            Registrar Curso
                         </button>
                     </div>
                 </form>

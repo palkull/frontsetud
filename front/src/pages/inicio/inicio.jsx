@@ -12,7 +12,7 @@ function Inicio() {
       <Nav />
       <main className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-8 bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800 transition-all duration-300">
         <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-5xl w-full p-10 flex flex-col items-center">
-          <h1 className="text-5xl font-extrabold text-blue-700 dark:text-blue-400 mb-4 text-center tracking-tight">Bienvenid@ {admin?.nombre ? `, ${admin.nombre}` : ""}.</h1>
+          <h1 className="text-5xl font-extrabold text-blue-700 dark:text-blue-400 mb-4 text-center tracking-tight">Bienvenido de vuelta.</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
             <Link
