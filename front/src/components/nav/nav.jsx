@@ -32,14 +32,16 @@ function Nav() {
         <div className="flex justify-between h-16 items-center">
           {/* Logo o marca */}
           <div className="flex-shrink-0 text-xl font-bold text-gray-800 dark:text-white">
-            <img className="w-50" src={Logo} alt="Logo" />
+            <Link to="/inicio"><img className="w-50" src={Logo} alt="Logo" /></Link>
           </div>
 
           {/* Menú de navegación */}
           <div className="hidden md:flex space-x-4 items-center relative">
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/inicio">Home</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/features">Mi cuenta</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/pricing">Documentos</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/inicio">Inicio</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/cursos">Cursos</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/usuarios">Usuarios</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/participantes">Participantes</Link>
+
             <button
               className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
               onClick={() => setShowConfigMenu((v) => !v)}

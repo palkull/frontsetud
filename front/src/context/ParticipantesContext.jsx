@@ -1,11 +1,17 @@
 import React, { useState, useContext, createContext, useCallback } from 'react';
-import {getParticipanteRequest, getParticipantesRequest, addParticipanteRequest, deleteParticipanteRequest  } from '../api/auth.participantes';
+import {
+    getParticipanteRequest, 
+    getParticipantesRequest, 
+    addParticipanteRequest, 
+    deleteParticipanteRequest,
+    subirCertificadoRequest
+} from '../api/auth.participantes';
 
 export const ParticipantesContext = createContext();
 
 export const useParticipantes = () => {
     const context = useContext(ParticipantesContext);
-        
+             
     if (!context) {
         throw new Error('useParticipants must be used within a ParticipantsProvider');
     }
@@ -37,9 +43,7 @@ export function ParticipantesProvider({ children }) {
             errores.push("El teléfono debe tener exactamente 10 dígitos.");
         }
 
-        // Validar formato de CURP
-        
-
+        // Validar formato de CURP                  
         if (errores.length > 0) {
             setError(errores);
             throw new Error(errores.join(" "));
@@ -48,7 +52,7 @@ export function ParticipantesProvider({ children }) {
         // Si pasa las validaciones, enviar al backend
         try {
             const res = await addParticipanteRequest(participante);
-            
+                         
             setError([]);
             return res;
         } catch (err) {
@@ -83,8 +87,35 @@ export function ParticipantesProvider({ children }) {
         } catch (error) {
             console.error("Error al obtener el participante:", error);
             throw error;
-        }   
+        }
     }, []);
+
+    // Nueva función para subir certificado
+    const subirCertificado = async (participanteId, certificadoFile) => {
+        try {
+            // Validar que sea un archivo PDF
+            if (certificadoFile.type !== 'application/pdf') {
+                const error = 'Solo se permiten archivos PDF';
+                setError([error]);
+                throw new Error(error);
+            }
+
+            // Validar tamaño del archivo (10MB máximo)
+            if (certificadoFile.size > 10 * 1024 * 1024) {
+                const error = 'El archivo PDF no puede ser mayor a 10MB';
+                setError([error]);
+                throw new Error(error);
+            }
+
+            const res = await subirCertificadoRequest(participanteId, certificadoFile);
+            setError([]);
+            return res.data;
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Error al subir el certificado';
+            setError([errorMessage]);
+            throw new Error(errorMessage);
+        }
+    };
 
     return (
         <ParticipantesContext.Provider value={{
@@ -93,6 +124,7 @@ export function ParticipantesProvider({ children }) {
             getParticipantes,
             getParticipante,
             deleteParticipante,
+            subirCertificado,
             error
         }}>
             {children}
