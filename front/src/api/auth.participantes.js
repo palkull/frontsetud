@@ -1,6 +1,6 @@
 import axios from './axios';
 
-export const getParticipantesRequest = () =>axios.get(`/participantes/verParticipantes`);
+export const getParticipantesRequest = () => axios.get(`/participantes/verParticipantes`);
 
 export const getParticipanteRequest = (id) => axios.get(`/participantes/verParticipante/${id}`);
 
@@ -10,3 +10,14 @@ export const updateParticipanteRequest = (participante) => axios.put(`/actualiza
 
 export const deleteParticipanteRequest = (id) => axios.delete(`/eliminarParticipante/${id._id}`);
 
+// Nueva función para subir certificado a un participante específico
+export const subirCertificadoRequest = (participanteId, certificadoFile) => {
+    const formData = new FormData();
+    formData.append('certificado', certificadoFile);
+    
+    return axios.post(`/participantes/participante/${participanteId}/certificado`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
