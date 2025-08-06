@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             setIsAuth(false); 
         }
     }
-
+ 
     const createUser = async (admin) => {
     try {
         const res = await addAdminRequest(admin);
