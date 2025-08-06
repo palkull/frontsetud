@@ -104,42 +104,39 @@ function Estudiantes() {
   return (
     <>
       <Nav />
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-        {/* Sidebar */}
-        <aside className="md:col-span-1">
-          <ul className="text-left font-medium text-lg leading-none divide-y divide-blue-200 border-blue-200">
-            <li>
-              <Link to="/add-participantes" className="py-3.5 w-full flex items-center text-blue-500 hover:text-blue-700 hover:bg-blue-50">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                Añadir Estudiante
-              </Link>
-            </li>
-            <li>
-              <Link to="/historial-participantes" className="py-3.5 w-full flex items-start text-blue-500 hover:text-blue-700 hover:bg-blue-50">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                <div>
-                  Historial Estudiantes
-                  <span className="font-normal text-gray-500 text-sm block"> (con confirmación)</span>
-                </div>
-              </Link>
-            </li>
-            <li>
-              <label className="py-3.5 w-full flex items-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                <div className="flex items-center gap-2">
-                  <FaFileExcel />
-                  Importar desde Excel
-                </div>
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleImportExcel}
-                  className="hidden"
-                />
-              </label>
-            </li>
-          </ul>
-        </aside>
+<div className="container mx-auto px-4 mt-4">
+  {/* Topbar elegante */}
+  <nav className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm  dark:border-gray-700">
+    <div className="flex flex-wrap items-center gap-6">
+      <Link
+        to="/add-participantes"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 transition-all font-medium"
+      >
+        <span className="text-sm">➕</span>
+        Añadir Estudiante
+      </Link>
+
+      <Link
+        to="/historial-participantes"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 transition-all font-medium"
+      >
+        <span className="text-sm">📜</span>
+        Historial Estudiantes
+      </Link>
+
+      <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium cursor-pointer">
+        <FaFileExcel className="text-lg" />
+        Importar Excel
+        <input
+          type="file"
+          accept=".xlsx, .xls"
+          onChange={handleImportExcel}
+          className="hidden"
+        />
+      </label>
+    </div>
+  </nav>
+
 
         {/* Contenido principal */}
         <section className="md:col-span-3">
