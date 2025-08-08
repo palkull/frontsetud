@@ -40,7 +40,7 @@ function Nav() {
             <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/inicio">Inicio</Link>
             <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/cursos">Cursos</Link>
             <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/usuarios">Usuarios</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/estudiantes">Estudiantes</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/participantes">Estudiantes</Link>
 
             <button
               className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"

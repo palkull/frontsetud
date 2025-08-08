@@ -5,6 +5,8 @@ import {
     addParticipanteRequest, 
     deleteParticipanteRequest,
     subirCertificadoRequest,
+    verCertificadoRequest,
+    descargarCertificadoRequest,
     getParticipantesConCursosRequest
 } from '../api/auth.participantes';
 
@@ -73,15 +75,15 @@ export function ParticipantesProvider({ children }) {
     }, []);
 
      const getParticipantesConCursos = useCallback(async (empresaId) => {
-    try {
-      const res = await getParticipantesConCursosRequest(empresaId);
-      return res.data;
-    } catch (error) {
-      console.error("Error al obtener participantes con cursos:", error);
-      setError([error.response?.data || 'Error al obtener datos']);
-      throw error;
-    }
-  }, []);
+        try {
+            const res = await getParticipantesConCursosRequest(empresaId);
+            return res.data;
+        } catch (error) {
+            console.error("Error al obtener participantes con cursos:", error);
+            setError([error.response?.data || 'Error al obtener datos']);
+            throw error;
+        }
+    }, []);
 
     const deleteParticipante = async (participantId) => {
         try {
@@ -102,7 +104,7 @@ export function ParticipantesProvider({ children }) {
         }
     }, []);
 
-    // Nueva función para subir certificado
+    // Función para subir certificado
     const subirCertificado = async (participanteId, certificadoFile) => {
         try {
             // Validar que sea un archivo PDF
@@ -129,6 +131,58 @@ export function ParticipantesProvider({ children }) {
         }
     };
 
+    // Nueva función para ver certificado
+    const verCertificado = async (participanteId) => {
+        try {
+            const res = await verCertificadoRequest(participanteId);
+            setError([]);
+            
+            // Retornar la URL para abrir en nueva ventana
+            if (res.data && res.data.url) {
+                return res.data.url;
+            } else {
+                throw new Error('URL del certificado no disponible');
+            }
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Error al obtener el certificado';
+            setError([errorMessage]);
+            throw new Error(errorMessage);
+        }
+    };
+
+    // Nueva función para descargar certificado
+    const descargarCertificado = async (participanteId, nombreArchivo) => {
+        try {
+            const res = await descargarCertificadoRequest(participanteId);
+            setError([]);
+            
+            // Crear un blob con los datos del archivo
+            const blob = new Blob([res.data], { type: 'application/pdf' });
+            
+            // Crear URL temporal para el blob
+            const url = window.URL.createObjectURL(blob);
+            
+            // Crear elemento de enlace temporal para descargar
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nombreArchivo || 'certificado.pdf';
+            
+            // Agregar al DOM, hacer clic y remover
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Limpiar URL temporal
+            window.URL.revokeObjectURL(url);
+            
+            return { success: true, message: 'Certificado descargado correctamente' };
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Error al descargar el certificado';
+            setError([errorMessage]);
+            throw new Error(errorMessage);
+        }
+    };
+
     return (
         <ParticipantesContext.Provider value={{
             participantes,
@@ -138,6 +192,8 @@ export function ParticipantesProvider({ children }) {
             getParticipantesConCursos,
             deleteParticipante,
             subirCertificado,
+            verCertificado,
+            descargarCertificado,
             error
         }}>
             {children}

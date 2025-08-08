@@ -22,6 +22,19 @@ export const subirCertificadoRequest = (participanteId, certificadoFile) => {
     });
 };
 
+// Nueva función para obtener la URL del certificado para visualización
+export const verCertificadoRequest = (participanteId) => 
+    axios.get(`/participantes/participante/${participanteId}/certificado/ver`);
+
+// Nueva función para descargar certificado
+export const descargarCertificadoRequest = (participanteId) => 
+    axios.get(`/participantes/participante/${participanteId}/certificado/descargar`, {
+        responseType: 'blob', // Importante para archivos binarios
+        headers: {
+            'Accept': 'application/pdf'
+        }
+    });
+
 // Función para obtener participantes con detalles de cursos
 export const getParticipantesConCursosRequest = (empresaId) => 
     axios.get(`/empresas/${empresaId}/participantes-con-cursos`);

@@ -1,17 +1,19 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useParticipantes } from "../../context/ParticipantesContext";
-import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaBuilding, FaBriefcase, FaIdCard, FaBookOpen, FaCalendarCheck, FaFilePdf, FaUpload, FaDownload, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaUser, FaEnvelope, FaPhone, FaBuilding, FaBriefcase, FaIdCard, FaBookOpen, FaCalendarCheck, FaFilePdf, FaUpload, FaDownload, FaTrash, FaEye } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 // Componente principal para ver el detalle de un participante
 function VerParticipante() {
   const { id } = useParams();
-  const { getParticipante, subirCertificado } = useParticipantes();
+  const { getParticipante, subirCertificado, verCertificado, descargarCertificado } = useParticipantes();
   const [participante, setParticipante] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploadingCertificate, setUploadingCertificate] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [viewingCertificate, setViewingCertificate] = useState(false);
+  const [downloadingCertificate, setDownloadingCertificate] = useState(false);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -87,10 +89,52 @@ function VerParticipante() {
     }
   };
 
-  // Función para descargar el certificado
-  const handleDownloadCertificate = () => {
-    if (participante?.certificado?.url) {
-      window.open(participante.certificado.url, '_blank');
+  // Función para ver el certificado usando el context
+  const handleViewCertificate = async () => {
+    if (!participante?.certificado?.url) {
+      alert('No hay certificado disponible para ver');
+      return;
+    }
+
+    try {
+      setViewingCertificate(true);
+      
+      // Opción 1: Usar la URL directa si ya está disponible
+      if (participante.certificado.url) {
+        window.open(participante.certificado.url, '_blank', 'noopener,noreferrer');
+      } else {
+        // Opción 2: Obtener URL desde el backend
+        const url = await verCertificado(id);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    } catch (error) {
+      console.error('Error viendo certificado:', error);
+      alert(error.message || 'Error al ver el certificado');
+    } finally {
+      setViewingCertificate(false);
+    }
+  };
+
+  // Función para descargar el certificado usando el context
+  const handleDownloadCertificate = async () => {
+    if (!participante?.certificado) {
+      alert('No hay certificado disponible para descargar');
+      return;
+    }
+
+    try {
+      setDownloadingCertificate(true);
+      
+      const nombreArchivo = participante.certificado.nombre_archivo || `Certificado_${participante.nombre}.pdf`;
+      await descargarCertificado(id, nombreArchivo);
+      
+      // Opcional: Mostrar mensaje de éxito
+      alert('Certificado descargado correctamente');
+    } catch (error) {
+      console.error('Error descargando certificado:', error);
+      alert(error.message || 'Error al descargar el certificado');
+    } finally {
+      setDownloadingCertificate(false);
     }
   };
 
@@ -139,7 +183,7 @@ function VerParticipante() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800 relative">
       <button
         type="button"
-        onClick={() => navigate("/estudiantes")}
+        onClick={() => navigate("/participantes")}
         className="absolute top-8 left-8 flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition"
       >
         <FaArrowLeft className="text-lg" />
@@ -194,13 +238,46 @@ function VerParticipante() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={handleDownloadCertificate}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
-                  >
-                    <FaDownload />
-                    Ver/Descargar
-                  </button>
+                  
+                  {/* Botones separados para Ver y Descargar */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleViewCertificate}
+                      disabled={viewingCertificate}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-2 rounded-lg transition text-sm"
+                      title="Ver certificado"
+                    >
+                      {viewingCertificate ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Abriendo...
+                        </>
+                      ) : (
+                        <>
+                          <FaEye />
+                          Ver
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleDownloadCertificate}
+                      disabled={downloadingCertificate}
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-2 rounded-lg transition text-sm"
+                      title="Descargar certificado"
+                    >
+                      {downloadingCertificate ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Descargando...
+                        </>
+                      ) : (
+                        <>
+                          <FaDownload />
+                          Descargar
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
