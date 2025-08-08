@@ -67,6 +67,7 @@ export function CursoProvider({ children }) {
         }
     };
 
+
     const inscribirParticipanteEnCurso = useCallback(async (cursoId, participanteId) => {
     try {
         const res = await inscribirParticipanteRequest(cursoId, participanteId);

@@ -97,6 +97,33 @@ function Estudiantes() {
     reader.readAsBinaryString(file);
   };
 
+  // Exportar participantes a Excel
+  const handleExportExcel = () => {
+    if (filteredParticipantes.length === 0) {
+      toast.warn("No hay estudiantes para exportar con los filtros actuales.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const dataToExport = filteredParticipantes.map(p => ({
+      'Nombre': p.nombre,
+      'Empresa': p.empresaProdecendia,
+      'Puesto': p.puesto,
+      'Edad': p.edad,
+      'Correo': p.correo,
+      'Teléfono': p.telefono,
+      'CURP': p.curp,
+      'Cursos Inscritos': p.cursos_inscritos?.length || 0,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Estudiantes");
+    XLSX.writeFile(workbook, "ReporteEstudiantes.xlsx");
+  };
+
   // Obtener empresas únicas para el filtro
   const empresasUnicas = [...new Set(participantes.map(p => p.empresaProdecendia).filter(Boolean))];
   const puestosUnicos = [...new Set(participantes.map(p => p.puesto).filter(Boolean))];
@@ -134,9 +161,17 @@ function Estudiantes() {
           className="hidden"
         />
       </label>
+
+      <button
+        type="button"
+        onClick={handleExportExcel}
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium"
+      >
+        <FaFileExcel className="text-lg" />
+        Exportar Excel
+      </button>
     </div>
   </nav>
-
 
         {/* Contenido principal */}
         <section className="md:col-span-3">

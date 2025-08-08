@@ -16,6 +16,7 @@ function AddParticipantes() {
   const queryParams = new URLSearchParams(location.search);
   const empresaId = queryParams.get('empresaId');
 
+  
   // Si hay un ID de empresa en la URL, lo mostramos en consola
   useEffect(() => {
     if(empresaId) {
@@ -49,7 +50,7 @@ function AddParticipantes() {
         if(empresaId) {
           navigate(`/empresas/${empresaId}`); // Volver a la empresa
         } else {
-          navigate("/estudiantes");
+          navigate("/participantes");
         }
       }, 2100);
     } catch (err) {
@@ -70,7 +71,7 @@ function AddParticipantes() {
           if(empresaId) {
             navigate(`/empresas/${empresaId}`);
           } else {
-            navigate("/estudiantes");
+            navigate("/participantes");
           }
         }}
         className="absolute top-8 left-8 flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition"

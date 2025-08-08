@@ -35,6 +35,7 @@ function VerCurso() {
     if (!participantes || participantes.length === 0) {
       try {
         await getParticipantes();
+        console.log("Participantes loaded:", participantes);
       } catch (error) {
         console.error("Error loading participantes:", error);
       }
@@ -78,9 +79,6 @@ function VerCurso() {
     }
   };
 
-  // ==================================================================
-  // ========= FUNCIÓN MODIFICADA CON LAS VALIDACIONES =========
-  // ==================================================================
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -326,41 +324,54 @@ function VerCurso() {
           </section>
 
           {/* Lista de participantes inscritos */}
-          {participantesInscritos > 0 && (
-            <section>
-              <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">
-                Lista de participantes ({participantesInscritos})
-              </h2>
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-60 overflow-y-auto">
-                {curso.participantes.map((participante, index) => (
-                  <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                    <div>
-                      <span className="text-gray-700 dark:text-gray-200 font-medium">
-                        {participante.participante_id?.nombre || `Participante ${index + 1}`}
-                      </span>
-                      <br />
-                      <span className="text-sm text-gray-500">
-                        {participante.participante_id?.correo}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        participante.estado === 'inscrito' ? 'bg-blue-100 text-blue-800' :
-                        participante.estado === 'completado' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {participante.estado}
-                      </span>
-                      <br />
-                      <span className="text-xs text-gray-400">
-                        {new Date(participante.fecha_inscripcion).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+{/* Lista de participantes inscritos */}
+{participantesInscritos > 0 && (
+  <section>
+    <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">
+      Lista de participantes ({participantesInscritos})
+    </h2>
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-60 overflow-y-auto">
+      {curso.participantes.map((participante, index) => (
+        <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+          <div>
+            <span className="text-gray-700 dark:text-gray-200 font-medium">
+              {participante.participante_id?.nombre || `Participante ${index + 1}`}
+            </span>
+            <br />
+            {/* Mostrar empresa de procedencia */}
+            {participante.participante_id?.empresaProdecendia && (
+              <span className="text-sm text-gray-500">
+                Empresa: {participante.participante_id.empresaProdecendia}
+              </span>
+            )}
+            {/* Mostrar correo */}
+            {participante.participante_id?.correo && (
+              <>
+                <br />
+                <span className="text-sm text-gray-500">
+                  {participante.participante_id.correo}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="text-right">
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              participante.estado === 'inscrito' ? 'bg-blue-100 text-blue-800' :
+              participante.estado === 'completado' ? 'bg-green-100 text-green-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {participante.estado}
+            </span>
+            <br />
+            <span className="text-xs text-gray-400">
+              {new Date(participante.fecha_inscripcion).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
         </div>
       </div>
 

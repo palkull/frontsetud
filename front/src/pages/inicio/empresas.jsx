@@ -107,6 +107,37 @@ function Empresas() {
     reader.readAsBinaryString(file);
   };
 
+  // Exportar empresas a Excel
+  const handleExportExcel = () => {
+    if (filteredEmpresas.length === 0) {
+      toast.warn("No hay empresas para exportar con los filtros actuales.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    const dataToExport = filteredEmpresas.map(empresa => ({
+      'Nombre': empresa.nombre,
+      'Tipo': empresa.tipo,
+      'RFC': empresa.rfc,
+      'Teléfono': empresa.telefono,
+      'Correo': empresa.correo,
+      'Dirección': empresa.direccion,
+      'Municipio': empresa.municipio,
+      'Estado': empresa.estado,
+      'Contacto Nombre': empresa.contacto?.nombre || 'N/A',
+      'Contacto Puesto': empresa.contacto?.puesto || 'N/A',
+      'Contacto Teléfono': empresa.contacto?.telefono || 'N/A',
+      'Contacto Correo': empresa.contacto?.correo || 'N/A',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Empresas");
+    XLSX.writeFile(workbook, "ReporteEmpresas.xlsx");
+  };
+
   // Obtener valores únicos para filtros
   const tiposUnicos = [...new Set(empresas.map(e => e.tipo).filter(Boolean))];
   const municipiosUnicos = [...new Set(empresas.map(e => e.municipio).filter(Boolean))];
@@ -168,6 +199,15 @@ function Empresas() {
                 className="hidden"
               />
             </label>
+            
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium"
+            >
+              <FaFileExcel className="text-lg" />
+              Exportar Excel
+            </button>
             
             {/* Botón para activar modo eliminación */}
             <button

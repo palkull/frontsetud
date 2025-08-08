@@ -4,6 +4,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FaFilter, FaSearch, FaEye } from "react-icons/fa";
 import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
 
 function Cursos() {
   const { cursos, getCursos, addCurso } = useCurso();
@@ -44,61 +45,125 @@ function Cursos() {
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-      // Procesa cada curso como en addCurso
+      let importedCount = 0;
+      let errorCount = 0;
+
+      // Procesa cada curso
       for (const row of rows) {
         try {
-          await addCurso(row);
+          // Mapeo flexible de columnas
+          const cursoData = {
+            nombre: row.nombre || row.Nombre,
+            tipo: row.tipo || row.Tipo,
+            modalidad: row.modalidad || row.Modalidad,
+            fechaInicio: row.fechaInicio || row['Fecha Inicio'],
+            fechaFin: row.fechaFin || row['Fecha Fin'],
+            descripcion: row.descripcion || row.Descripción,
+            costo: row.costo || row.Costo,
+          };
+          await addCurso(cursoData);
+          importedCount++;
         } catch (error) {
-          // Puedes mostrar un toast o manejar el error aquí
           console.error("Error al importar curso:", error);
+          errorCount++;
         }
       }
+      
       getCursos(); // Actualiza la lista después de importar
+
+      if (importedCount > 0) {
+        toast.success(`${importedCount} cursos importados correctamente.`);
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} cursos no pudieron ser importados.`);
+      }
     };
     reader.readAsBinaryString(file);
+  };
+
+  // Exportar cursos a Excel
+  const handleExportExcel = () => {
+    if (filteredCursos.length === 0) {
+      toast.warn("No hay cursos para exportar con los filtros actuales.", {
+        position: "top-center",
+      });
+      return;
+    }
+
+    const dataToExport = filteredCursos.map(curso => ({
+      'Nombre': curso.nombre,
+      'Tipo': curso.tipo,
+      'Modalidad': curso.modalidad,
+      'Fecha Inicio': curso.fechaInicio ? new Date(curso.fechaInicio).toLocaleDateString('es-MX') : 'N/A',
+      'Fecha Fin': curso.fechaFin ? new Date(curso.fechaFin).toLocaleDateString('es-MX') : 'N/A',
+      'Descripción': curso.descripcion || 'N/A',
+      'Costo': curso.costo || 'N/A',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Cursos");
+    XLSX.writeFile(workbook, "ReporteCursos.xlsx");
+    toast.success("Reporte de cursos exportado exitosamente.");
   };
 
   return (
     <>
       <Nav />
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-        {/* Sidebar */}
-        <aside className="md:col-span-1">
-          <ul className="text-left font-medium text-lg leading-none divide-y divide-blue-200 border-blue-200">
-            <li>
-              <Link to="/add-cursos" className="py-3.5 w-full flex items-center text-blue-500 hover:text-blue-700 hover:bg-blue-50">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                Añadir Curso
-              </Link>
-            </li>
-            <li>
-              <Link to="delete" className="py-3.5 w-full flex items-start text-blue-500 hover:text-blue-700 hover:bg-blue-50">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                <div>
-                  Eliminar curso
-                  <span className="font-normal text-gray-500 text-sm block"> (con confirmación)</span>
-                </div>
-              </Link>
-            </li>
-            <li>
-              <label className="py-3.5 w-full flex items-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer">
-                <span className="ml-5 mr-2.5 w-1 h-7 bg-blue-500 rounded-r-md"></span>
-                Importar cursos desde Excel
-                <input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleImportExcel}
-                  className="hidden"
-                />
-              </label>
-            </li>
-          </ul>
-        </aside>
+      <div className="container mx-auto px-4 mt-4">
+        {/* Topbar de acciones */}
+        <nav className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm dark:border-gray-700 mb-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <Link
+              to="/add-cursos"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 transition-all font-medium"
+            >
+              <span className="text-sm">➕</span>
+              Añadir Curso
+            </Link>
+
+            <Link
+              to="delete"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-900 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800 transition-all font-medium"
+            >
+              <FaTrash className="text-lg" />
+              Eliminar Curso
+            </Link>
+
+            <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium cursor-pointer">
+              <FaFileExcel className="text-lg" />
+              Importar Excel
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleImportExcel}
+                className="hidden"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium"
+            >
+              <FaFileExcel className="text-lg" />
+              Exportar Excel
+            </button>
+          </div>
+        </nav>
 
         {/* Contenido principal */}
-        <section className="md:col-span-3">
+        <section>
           <main className="p-4 bg-white dark:bg-gray-800 rounded shadow">
             <Outlet />
+            
+            {/* Título */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400">
+                Cursos Registrados ({filteredCursos.length})
+              </h2>
+            </div>
+
             {/* Barra de búsqueda y filtros */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
               <div className="flex items-center gap-2 w-full md:w-1/2">
@@ -151,6 +216,18 @@ function Cursos() {
                     <option value="hibrido">Híbrido</option>
                   </select>
                 </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setTipo("");
+                      setModalidad("");
+                      setSearch("");
+                    }}
+                    className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
               </div>
             )}
             <div className="overflow-x-auto">
@@ -172,10 +249,10 @@ function Cursos() {
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{curso.tipo}</td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{curso.modalidad}</td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
-                        {curso.fechaInicio ? curso.fechaInicio.slice(0, 10) : ""}
+                        {curso.fechaInicio ? new Date(curso.fechaInicio).toLocaleDateString() : "N/A"}
                       </td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
-                        {curso.fechaFin ? curso.fechaFin.slice(0, 10) : ""}
+                        {curso.fechaFin ? new Date(curso.fechaFin).toLocaleDateString() : "N/A"}
                       </td>
                       <td className="px-4 py-2">
                         <button
@@ -192,7 +269,12 @@ function Cursos() {
                 </tbody>
               </table>
               {filteredCursos.length === 0 && (
-                <div className="text-center text-gray-500 py-8">No hay cursos registrados.</div>
+                <div className="text-center text-gray-500 py-8">
+                  {cursos.length === 0 
+                    ? "No hay cursos registrados." 
+                    : "No se encontraron cursos con los filtros aplicados."
+                  }
+                </div>
               )}
             </div>
           </main>
