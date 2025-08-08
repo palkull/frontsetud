@@ -2,7 +2,7 @@ import axios from './axios';
 
 export const getAdminsRequest = () =>axios.get(`/verUsuarios`);
 
-export const getAdminRequest = (id) =>axios.get(`/cursos/verCurso/${id}`);
+export const getAdminRequest = (id) =>axios.get(`/VerUsuario/${id}`);
 
 export const addAdminRequest = (admin) => axios.post(`/addUser`, admin);
 

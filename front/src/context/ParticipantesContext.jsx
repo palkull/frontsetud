@@ -4,7 +4,8 @@ import {
     getParticipantesRequest, 
     addParticipanteRequest, 
     deleteParticipanteRequest,
-    subirCertificadoRequest
+    subirCertificadoRequest,
+    getParticipantesConCursosRequest
 } from '../api/auth.participantes';
 
 export const ParticipantesContext = createContext();
@@ -71,6 +72,17 @@ export function ParticipantesProvider({ children }) {
         }
     }, []);
 
+     const getParticipantesConCursos = useCallback(async (empresaId) => {
+    try {
+      const res = await getParticipantesConCursosRequest(empresaId);
+      return res.data;
+    } catch (error) {
+      console.error("Error al obtener participantes con cursos:", error);
+      setError([error.response?.data || 'Error al obtener datos']);
+      throw error;
+    }
+  }, []);
+
     const deleteParticipante = async (participantId) => {
         try {
             await deleteParticipanteRequest({ id: participantId });
@@ -123,6 +135,7 @@ export function ParticipantesProvider({ children }) {
             createParticipante,
             getParticipantes,
             getParticipante,
+            getParticipantesConCursos,
             deleteParticipante,
             subirCertificado,
             error

@@ -21,3 +21,15 @@ export const subirCertificadoRequest = (participanteId, certificadoFile) => {
         },
     });
 };
+
+// Función para obtener participantes con detalles de cursos
+export const getParticipantesConCursosRequest = (empresaId) => 
+    axios.get(`/empresas/${empresaId}/participantes-con-cursos`);
+
+// Función para obtener estadísticas de cursos
+export const getEstadisticasCursosRequest = (empresaId) => 
+    axios.get(`/empresas/${empresaId}/estadisticas-cursos`);
+
+// Función para obtener participantes agrupados por curso
+export const getParticipantesPorCursoRequest = (empresaId) => 
+    axios.get(`/empresas/${empresaId}/participantes-por-curso`);

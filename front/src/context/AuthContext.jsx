@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { registerRequest, loginRequest, verifyTokenRequest } from '../api/auth';
-import { addAdminRequest, getAdminsRequest, deleteAdminRequest } from '../api/auth.admin';
+import { addAdminRequest, getAdminsRequest, deleteAdminRequest, getAdminRequest } from '../api/auth.admin';
 import Cookies from 'js-cookie';
 
 const AuthContext = createContext();
@@ -70,6 +70,16 @@ export const AuthProvider = ({ children }) => {
             throw error;
         }
     };
+
+    const getUserById = useCallback(async (id) => {
+  try {
+    const res = await getAdminRequest(id); // Asegúrate que esta ruta exista en el backend
+    return res.data;
+  } catch (error) {
+    console.error("Error al obtener el usuario:", error);
+    throw new Error("No se pudo obtener el usuario");
+  }
+}, []);
 
     const deleteUsers = async (ids) => {
         try {
@@ -146,6 +156,7 @@ export const AuthProvider = ({ children }) => {
             signup,
             register,
             getUsers,
+            getUserById,
             createUser,
             deleteUsers,
             login,

@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom"; // Añadimos useNavigate
 import Nav from "../../components/nav/nav";
 import { useState, useEffect } from "react";
 import { FaFilter, FaSearch, FaEye, FaTrash } from "react-icons/fa";
@@ -14,6 +14,7 @@ function Usuarios() {
   const [rol, setRol] = useState("");
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const navigate = useNavigate(); // Añadimos el hook useNavigate
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -94,10 +95,9 @@ function Usuarios() {
     }
   };
 
-  // Redirecciona a la página de verUsuario con el id (puedes crearla después)
+  // Redirecciona a la página de verUsuario con el id
   const handleVerMas = (id) => {
-    // navigate(`/verUsuario/${id}`);
-    console.log("Ver usuario:", id);
+    navigate(`/verUsuario/${id}`); // Usamos navigate para redirigir
   };
 
   return (
@@ -239,7 +239,7 @@ function Usuarios() {
                       <td className="px-4 py-2">
                         <button
                           className="flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 rounded shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition"
-                          onClick={() => handleVerMas(user._id || user.id)}
+                          onClick={() => handleVerMas(user._id || user.id)} // Usamos la función handleVerMas
                           title="Ver más"
                         >
                           <FaEye />
@@ -278,7 +278,7 @@ function Usuarios() {
           </main>
         </section>
       </div>
-      <footer className="text-center text-sm text-gray-500 mt-4">2022 KeepCoding</footer>
+      
     </>
   );
 }

@@ -122,7 +122,7 @@ function VerParticipante() {
           <h2 className="text-2xl font-bold text-blue-700 dark:text-blue-400 mb-4">Participante no encontrado</h2>
           <button
             type="button"
-            onClick={() => navigate("/estudiantes")}
+            onClick={() => navigate("/participantes")}
             className="flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition mx-auto"
           >
             <FaArrowLeft className="text-lg" />

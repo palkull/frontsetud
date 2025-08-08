@@ -1,36 +1,56 @@
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { useParticipantes } from "../../context/ParticipantesContext";
-import { useEffect } from "react"; // Importamos useEffect
+import { useEffect, useState } from "react";
+import { useEmpresas } from "../../context/EmpresasContext";
 
-function AddParticipantes() {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+function AddToParticipantes() {
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm();
   const navigate = useNavigate();
-  const location = useLocation(); // Usamos useLocation para obtener los parámetros de la URL
+  const { id } = useParams(); // Cambiado: Obtenemos el parámetro como 'id'
+  const empresaId = id; // Asignamos a empresaId
   const { createParticipante, error } = useParticipantes();
+  const { getEmpresa } = useEmpresas();
+  const [empresaNombre, setEmpresaNombre] = useState('');
+  const [loadingEmpresa, setLoadingEmpresa] = useState(true);
 
-  // Obtener el ID de la empresa de la URL
-  const queryParams = new URLSearchParams(location.search);
-  const empresaId = queryParams.get('empresaId');
-
-  // Si hay un ID de empresa en la URL, lo mostramos en consola
+  console.log("ID de la empresa:", id);
+  // Buscar la empresa por ID y obtener su nombre
   useEffect(() => {
-    if(empresaId) {
-      console.log("ID de empresa recibido para asociar participante:", empresaId);
-      // También podrías pre-seleccionar la empresa en el formulario si lo deseas
-    }
-  }, [empresaId]);
+    const fetchEmpresa = async () => {
+      if (empresaId) {
+        try {
+          setLoadingEmpresa(true);
+          const empresa = await getEmpresa(empresaId);
+          setEmpresaNombre(empresa.nombre);
+          console.log("llegó la empresa:", empresa.nombre);
+          // Autocompletar el campo en el formulario
+          setValue("empresaProdecendia", empresa.nombre);
+        } catch (error) {
+          console.error("Error al obtener la empresa:", error);
+          toast.error("Error al obtener datos de la empresa", {
+            position: "top-center",
+            autoClose: 3000,
+          });
+        } finally {
+          setLoadingEmpresa(false);
+        }
+      }
+    };
+
+    fetchEmpresa();
+  }, [empresaId, getEmpresa, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // Convertir edad a número y agregar empresaId si existe
+      // Convertir edad a número y agregar empresaId
       const Data = {
         ...data,
         edad: parseInt(data.edad, 10),
-        ...(empresaId && { empresa_id: empresaId }) // Agregamos empresa_id si existe
+        ...(empresaId && { empresa_id: empresaId })
       };
       
       await createParticipante(Data);
@@ -44,13 +64,9 @@ function AddParticipantes() {
       });
       reset();
       
-      // Redirigir según si fue asociado a una empresa o no
+      // Redirigir a la página de la empresa
       setTimeout(() => {
-        if(empresaId) {
-          navigate(`/empresas/${empresaId}`); // Volver a la empresa
-        } else {
-          navigate("/estudiantes");
-        }
+        navigate(`/empresas`);
       }, 2100);
     } catch (err) {
       console.error("Error al registrar participante:", err);
@@ -65,27 +81,26 @@ function AddParticipantes() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800 relative">
       <button
         type="button"
-        onClick={() => {
-          // Si hay empresaId, regresar a la empresa, si no a estudiantes
-          if(empresaId) {
-            navigate(`/empresas/${empresaId}`);
-          } else {
-            navigate("/estudiantes");
-          }
-        }}
+        onClick={() => navigate(`/empresas`)}
         className="absolute top-8 left-8 flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition"
       >
         <FaArrowLeft className="text-lg" />
         <span className="font-medium text-sm">Regresar</span>
       </button>
+      
       <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-4xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
         <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400 mb-6 text-center">Registrar Participante</h1>
         
-        {/* Mensaje si está siendo asociado a una empresa */}
+        {/* Mensaje de asociación a empresa */}
         {empresaId && (
           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4 text-center">
             <p className="text-blue-700 dark:text-blue-300 font-medium">
-              Este participante se asociará automáticamente a la empresa
+              Este participante se asociará automáticamente a la empresa: 
+              {loadingEmpresa ? (
+                <span className="ml-2 animate-pulse">Cargando...</span>
+              ) : (
+                <strong className="ml-2">{empresaNombre}</strong>
+              )}
             </p>
           </div>
         )}
@@ -95,6 +110,7 @@ function AddParticipantes() {
             {error.map((err, i) => <div key={i}>{typeof err === "object" ? err.message : err}</div>)}
           </div>
         )}
+        
         <form onSubmit={onSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
@@ -112,7 +128,10 @@ function AddParticipantes() {
                 type="text"
                 placeholder="Empresa de procedencia"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                {...register("empresaProdecendia", { required: "La empresa de procedencia es obligatoria" })}
+                {...register("empresaProdecendia", { 
+                  required: "La empresa de procedencia es obligatoria",
+                  disabled: loadingEmpresa
+                })}
               />
               {errors.empresaProdecendia && <span className="text-red-500 text-xs">{errors.empresaProdecendia.message}</span>}
             </div>
@@ -184,8 +203,8 @@ function AddParticipantes() {
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 uppercase"
               {...register("curp", { 
                 required: "La CURP es obligatoria",
-                minLength: { value: 16, message: "La CURP debe tener 18 caracteres" },
-                maxLength: { value: 19, message: "La CURP debe tener 18 caracteres" },
+                minLength: { value: 18, message: "La CURP debe tener 18 caracteres" },
+                maxLength: { value: 18, message: "La CURP debe tener 18 caracteres" },
               })}
               onChange={(e) => {
                 e.target.value = e.target.value.toUpperCase();
@@ -197,9 +216,12 @@ function AddParticipantes() {
           <div>
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-800 text-white font-semibold px-4 py-3 rounded-xl shadow transition duration-300 focus:outline-none mt-4"
+              disabled={loadingEmpresa}
+              className={`w-full bg-blue-600 hover:bg-blue-800 text-white font-semibold px-4 py-3 rounded-xl shadow transition duration-300 focus:outline-none mt-4 ${
+                loadingEmpresa ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Registrar Participante
+              {loadingEmpresa ? 'Cargando...' : 'Registrar Participante'}
             </button>
           </div>
         </form>
@@ -209,4 +231,4 @@ function AddParticipantes() {
   );
 }
 
-export default AddParticipantes;
+export default AddToParticipantes;
