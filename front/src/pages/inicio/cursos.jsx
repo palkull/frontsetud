@@ -2,7 +2,7 @@ import { useCurso } from "../../context/CursoContext";
 import Nav from "../../components/nav/nav";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { FaFilter, FaSearch, FaEye } from "react-icons/fa";
+import { FaFilter, FaSearch, FaEye, FaTrash, FaFileExcel  } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 
@@ -120,14 +120,6 @@ function Cursos() {
             >
               <span className="text-sm">➕</span>
               Añadir Curso
-            </Link>
-
-            <Link
-              to="delete"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-900 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800 transition-all font-medium"
-            >
-              <FaTrash className="text-lg" />
-              Eliminar Curso
             </Link>
 
             <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium cursor-pointer">

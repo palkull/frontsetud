@@ -18,7 +18,8 @@ import AddParticipantes from "./components/estudiantes/addestudiante";
 import AddToParticipantes from "./components/estudiantes/addtoEstudiante";
 import AddEmpresas from "./components/empresas/addEmpresa";
 
-import DeleteUsers from "./components/users/deleteusers";
+import HistorialUsuarios from "./components/users/deleteusers";
+import HistorialParticipantes from './components/estudiantes/historialParticipantes';
 
 import { EmpresasProvider } from "./context/EmpresasContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -43,16 +44,16 @@ function App() {
               <Route path="/add-empresas" element={<AddEmpresas />} />
               <Route path="/add-participantes" element={<AddParticipantes />} />
               <Route path="/add-participantes-to/:id" element={<AddToParticipantes />} />
-
+              
 
               <Route path="/verEmpresa/:id" element={<VerEmpresa />} />
               <Route path="/verParticipante/:id" element={<VerParticipante />} />
               <Route path="/verUsuario/:id" element={<VerUsuario />} />
-              <Route path="/historial-participantes" element={<DeleteUsers />} />
+              <Route path="/historial-participantes" element={<HistorialParticipantes />} />
 
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/add-usuarios" element={<AddUsuarios />} />
-              <Route path="/historial-usuarios" element={<DeleteUsers />} />
+              <Route path="/historial-usuarios" element={<HistorialUsuarios />} />
 
               <Route path="/verCurso/:id" element={<VerCurso />} /> {/* <-- Cambia esto */}
               <Route path="/add-cursos" element={<AddCursos />} />

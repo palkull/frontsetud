@@ -8,9 +8,25 @@ export const addParticipanteRequest = (participante) => axios.post(`/participant
 
 export const updateParticipanteRequest = (participante) => axios.put(`/actualizarParticipante/${participante._id}`, participante);
 
-export const deleteParticipanteRequest = (id) => axios.delete(`/eliminarParticipante/${id._id}`);
+export const deleteParticipanteRequest = async (id) => {
+    try {
+        return await axios.delete(`/participantes/participante/${id}/bajar`);
+    } catch (error) {
+        console.error('Error en deleteParticipanteRequest:', error);
+        throw error;
+    }
+};
 
-// Nueva función para subir certificado a un participante específico
+export const getHistorialParticipantesRequest = async () => {
+    try {
+        return await axios.get('/participantes/historial-participantes');
+    } catch (error) {
+        console.error('Error en getHistorialParticipantesRequest:', error);
+        throw error;
+    }
+};
+
+// subir certificado a un participante específico
 export const subirCertificadoRequest = (participanteId, certificadoFile) => {
     const formData = new FormData();
     formData.append('certificado', certificadoFile);

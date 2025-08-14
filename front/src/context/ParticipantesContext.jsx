@@ -2,6 +2,7 @@ import React, { useState, useContext, createContext, useCallback } from 'react';
 import {
     getParticipanteRequest, 
     getParticipantesRequest, 
+    getHistorialParticipantesRequest,
     addParticipanteRequest, 
     deleteParticipanteRequest,
     subirCertificadoRequest,
@@ -23,6 +24,8 @@ export const useParticipantes = () => {
 
 export function ParticipantesProvider({ children }) {
     const [participantes, setParticipantes] = useState([]);
+    const [historialParticipantes, setHistorialParticipantes] = useState([]); // <- NUEVO ESTADO
+    const [estadisticasHistorial, setEstadisticasHistorial] = useState(null); 
     const [error, setError] = useState([]);
 
     const createParticipante = async (participante) => {
@@ -74,6 +77,44 @@ export function ParticipantesProvider({ children }) {
         }
     }, []);
 
+        const getHistorialParticipantes = useCallback(async () => {
+        try {
+            const res = await getHistorialParticipantesRequest();
+            console.log('Historial de participantes fetched:', res.data);
+            setHistorialParticipantes(res.data.participantes || []);
+            setEstadisticasHistorial(res.data.estadisticas || null);
+            setError([]);
+            return res.data;
+        } catch (error) {
+            console.error('Error al obtener historial de participantes:', error);
+            const errorMessage = error.response?.data?.message || 'Error al obtener el historial';
+            setError([errorMessage]);
+            throw error;
+        }
+    }, []);
+
+const deleteParticipante = async (id) => {
+    try {
+        // Llamar al request que cambia el status a inactivo
+        const res = await deleteParticipanteRequest(id);
+        
+        // Actualizar el estado local removiendo el participante de la lista
+        // o marcándolo como inactivo dependiendo de tu lógica
+        setParticipantes(prevParticipantes => 
+            prevParticipantes.filter(participante => 
+                (participante._id || participante.id) !== id
+            )
+        );
+        
+        setError([]);
+        return res.data;
+    } catch (err) {
+        const errorMessage = err.response?.data?.message || err.message || 'Error al eliminar el participante';
+        setError([errorMessage]);
+        throw new Error(errorMessage);
+    }
+};
+
      const getParticipantesConCursos = useCallback(async (empresaId) => {
         try {
             const res = await getParticipantesConCursosRequest(empresaId);
@@ -85,14 +126,6 @@ export function ParticipantesProvider({ children }) {
         }
     }, []);
 
-    const deleteParticipante = async (participantId) => {
-        try {
-            await deleteParticipanteRequest({ id: participantId });
-            setParticipantes(participantes.filter(participante => participante.id !== participantId));
-        } catch (err) {
-            setError([err.response ? err.response.data : 'An error occurred']);
-        }
-    };
 
     const getParticipante = useCallback(async (id) => {
         try {
@@ -190,6 +223,9 @@ export function ParticipantesProvider({ children }) {
             getParticipantes,
             getParticipante,
             getParticipantesConCursos,
+            getHistorialParticipantes,
+            estadisticasHistorial,
+            historialParticipantes,
             deleteParticipante,
             subirCertificado,
             verCertificado,
