@@ -10,7 +10,7 @@ function ProtectedRoutes() {
   }
   if (!loading && !isAuth) {
     console.log('Redirecting to login');
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
     
   }
   return <Outlet />;

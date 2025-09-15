@@ -36,7 +36,6 @@ function App() {
           {/* Aquí puedes agregar más contextos si es necesario */}
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoutes />} >
               <Route path="/inicio" element={<Inicio />} />
               <Route path="/participantes" element={<Participantes />} />
