@@ -1,15 +1,9 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "https://back-setued.onrender.com";
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+const instance = axios.create({
+  baseURL: "https://back-setued.onrender.com/",
+  withCredentials: true,
 
-export default axios;
+})
+
+export default instance;
