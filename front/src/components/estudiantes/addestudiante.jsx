@@ -107,6 +107,19 @@ function AddParticipantes() {
               />
               {errors.nombre && <span className="text-red-500 text-xs">{errors.nombre.message}</span>}
             </div>
+            <div>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
+                {...register("sexo", { required: "El sexo es obligatorio" })}
+                defaultValue=""
+              >
+                <option value="" disabled>Seleccionar sexo</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="No binario">No binario</option>
+              </select>
+              {errors.sexo && <span className="text-red-500 text-xs">{errors.sexo.message}</span>}
+            </div>
             
             <div>
               <input

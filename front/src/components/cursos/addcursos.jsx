@@ -77,6 +77,7 @@ function AddCursos() {
                                     <option value="diplomado">Diplomado</option>
                                     <option value="distintivo">Distintivo</option>
                                     <option value="seminario">Seminario</option>
+                                    <option value="seminario">Taller</option>
                                 </select>
                                 {errors.tipo && <span className="text-red-500 text-xs">{errors.tipo.message}</span>}
                             </div>

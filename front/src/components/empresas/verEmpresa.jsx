@@ -224,12 +224,7 @@ function VerEmpresa() {
                             {participante.nombre || 'Participante sin nombre'}
                           </Link>
                           <div className="text-sm text-gray-500 mt-2">
-                            <div className="flex items-center gap-2">
-                              <FaCalendarCheck />
-                              <span>
-                                Asociado el: {new Date(participante.fecha_asociacion).toLocaleDateString()}
-                              </span>
-                            </div>
+                         
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`text-xs capitalize px-2 py-1 rounded-full ${
                                 participante.estado === 'activo' 

@@ -53,11 +53,19 @@ export const AuthProvider = ({ children }) => {
     const login = async (admin) => {
         try {
             const res = await loginRequest(admin);
-            setIsAuth(true);
+            console.log("Login response:", res.data); // Debug log
+            
+            // Store complete user data including role
             setAdmin(res.data);
+            setIsAuth(true);
+            
+            // Store in localStorage with complete user data
+            localStorage.setItem('user', JSON.stringify(res.data));
+            
+            return res.data;
         } catch (error) {
-            setError([error.response ? error.response.data : 'An error occurred']);
-            setIsAuth(false);
+            console.error("Login error:", error);
+            setError(error.response?.data?.message || "Error en el inicio de sesión");
         }
     };
 
@@ -101,11 +109,11 @@ export const AuthProvider = ({ children }) => {
         }  
     };
     const logout = () => {
-        Cookies.remove('token');
-        setIsAuth(false);
+        localStorage.removeItem('user');
         setAdmin(null);
+        setIsAuth(false);
+    };
 
-    }
     useEffect(() => {
         if (error.length > 0) {
             const timer = setTimeout(() => {
@@ -149,6 +157,36 @@ export const AuthProvider = ({ children }) => {
         checkLogin();
     }, []);
 
+    // Modify isAdmin function to properly check role
+    const isAdmin = useCallback(() => {
+        // Debug log
+        console.log("Current admin state:", admin);
+        return admin?.rol === true;
+    }, [admin]);
+
+    // Add function to check stored user on mount
+    useEffect(() => {
+        const checkAuth = () => {
+            try {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    const userData = JSON.parse(storedUser);
+                    console.log("Stored user data:", userData); // Debug log
+                    setAdmin(userData);
+                    setIsAuth(true);
+                }
+            } catch (error) {
+                console.error("Error checking auth:", error);
+                localStorage.removeItem('user');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+    // En el return del AuthProvider, agregar isAdmin al value
     return (
         <AuthContext.Provider value={{
             admin,
@@ -165,7 +203,8 @@ export const AuthProvider = ({ children }) => {
             error,
             setError,
             loading,
-            logout
+            logout,
+            isAdmin // Agregar la función helper
         }}>
             {children}
         </AuthContext.Provider>

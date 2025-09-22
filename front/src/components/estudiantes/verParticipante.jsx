@@ -7,13 +7,15 @@ import { Link } from "react-router-dom";
 // Componente principal para ver el detalle de un participante
 function VerParticipante() {
   const { id } = useParams();
-  const { getParticipante, subirCertificado, verCertificado, descargarCertificado } = useParticipantes();
-  const [participante, setParticipante] = useState(null);
+  const { getParticipante, subirCertificado } = useParticipantes();
+  const [participante, setParticipante] = useState({
+    certificados: [] // Initialize with empty array
+  });
   const [loading, setLoading] = useState(true);
   const [uploadingCertificate, setUploadingCertificate] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [viewingCertificate, setViewingCertificate] = useState(false);
-  const [downloadingCertificate, setDownloadingCertificate] = useState(false);
+  const [tipo, setTipo] = useState('otro');
+  const [descripcion, setDescripcion] = useState('');
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -21,14 +23,26 @@ function VerParticipante() {
 
   // Función para cargar los datos del participante
   const loadParticipanteData = useCallback(async () => {
-    if (!id) return;
     try {
       setLoading(true);
-      const participanteData = await getParticipante(id);
-      setParticipante(participanteData);
+      const data = await getParticipante(id);
+      console.log("Datos del participante cargados:", data); // Para debug
+      
+      // Normalizar la estructura de certificados
+      let certificados = [];
+      if (data.certificados && Array.isArray(data.certificados)) {
+        certificados = data.certificados;
+      } else if (data.certificado) {
+        // Si viene como objeto singular, lo convertimos a array
+        certificados = [data.certificado];
+      }
+      
+      setParticipante({
+        ...data,
+        certificados: certificados
+      });
     } catch (error) {
-      console.error("Error cargando el participante:", error);
-      setParticipante(null);
+      console.error("Error al cargar participante:", error);
     } finally {
       setLoading(false);
     }
@@ -64,83 +78,61 @@ function VerParticipante() {
       return;
     }
 
+    if (!tipo) {
+      alert('Por favor selecciona un tipo de certificado');
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      alert('El archivo no puede ser mayor a 10MB');
+      return;
+    }
+
     try {
       setUploadingCertificate(true);
-      const result = await subirCertificado(id, selectedFile);
       
-      // Actualizar el estado local del participante
-      setParticipante(prev => ({
-        ...prev,
-        certificado: result.certificado
-      }));
+      const formData = new FormData();
+      formData.append('certificado', selectedFile);
+      formData.append('tipo', tipo);
+      formData.append('descripcion', descripcion);
+
+      await subirCertificado(id, formData);
       
-      // Limpiar el archivo seleccionado
+      // Limpiar el formulario
       setSelectedFile(null);
+      setTipo('otro');
+      setDescripcion('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      
+
+      // Recargar los datos del participante
+      await loadParticipanteData();
+
       alert('Certificado subido correctamente');
     } catch (error) {
-      console.error('Error subiendo certificado:', error);
+      console.error('Error:', error);
       alert(error.message || 'Error al subir el certificado');
     } finally {
       setUploadingCertificate(false);
     }
   };
 
-  // Función para ver el certificado usando el context
-  const handleViewCertificate = async () => {
-    if (!participante?.certificado?.url) {
-      alert('No hay certificado disponible para ver');
-      return;
-    }
-
-    try {
-      setViewingCertificate(true);
-      
-      // Opción 1: Usar la URL directa si ya está disponible
-      if (participante.certificado.url) {
-        window.open(participante.certificado.url, '_blank', 'noopener,noreferrer');
-      } else {
-        // Opción 2: Obtener URL desde el backend
-        const url = await verCertificado(id);
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
-    } catch (error) {
-      console.error('Error viendo certificado:', error);
-      alert(error.message || 'Error al ver el certificado');
-    } finally {
-      setViewingCertificate(false);
-    }
-  };
-
-  // Función para descargar el certificado usando el context
-  const handleDownloadCertificate = async () => {
-    if (!participante?.certificado) {
-      alert('No hay certificado disponible para descargar');
-      return;
-    }
-
-    try {
-      setDownloadingCertificate(true);
-      
-      const nombreArchivo = participante.certificado.nombre_archivo || `Certificado_${participante.nombre}.pdf`;
-      await descargarCertificado(id, nombreArchivo);
-      
-      // Opcional: Mostrar mensaje de éxito
-      alert('Certificado descargado correctamente');
-    } catch (error) {
-      console.error('Error descargando certificado:', error);
-      alert(error.message || 'Error al descargar el certificado');
-    } finally {
-      setDownloadingCertificate(false);
+  // Función para descargar certificado
+  const handleDownloadCertificate = (certificado) => {
+    if (certificado.url) {
+      window.open(certificado.url, '_blank');
+    } else {
+      alert('URL del certificado no disponible');
     }
   };
 
   // Función para cancelar la selección de archivo
   const handleCancelFileSelection = () => {
     setSelectedFile(null);
+    setTipo('otro');
+    setDescripcion('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -177,124 +169,130 @@ function VerParticipante() {
     );
   }
 
-  const cursosInscritos = participante.cursos_inscritos || [];
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800 relative">
-      <button
-        type="button"
-        onClick={() => navigate("/participantes")}
-        className="absolute top-8 left-8 flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg shadow hover:bg-blue-200 dark:hover:bg-gray-700 transition"
-      >
-        <FaArrowLeft className="text-lg" />
-        <span className="font-medium text-sm">Regresar</span>
-      </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-300 dark:from-gray-900 dark:via-black dark:to-gray-800">
+      <div className="container mx-auto px-4 py-8">
+        {/* Botón Regresar */}
+        <button
+          onClick={() => navigate("/participantes")}
+          className="mb-6 flex items-center gap-2 bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-lg hover:bg-blue-200 dark:hover:bg-gray-700 transition-colors"
+        >
+          <FaArrowLeft />
+          <span>Regresar a Participantes</span>
+        </button>
 
-      <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl w-full max-w-4xl border border-gray-200 dark:border-gray-700 transition-all duration-300 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center gap-4 mb-8">
-            <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full">
-                <FaUser className="text-3xl text-blue-700 dark:text-blue-400" />
-            </div>
-            <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-400">{participante.nombre}</h1>
-        </div>
-        
-        <div className="space-y-8">
-          {/* Datos Personales y de Contacto */}
-          <section>
-            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Datos Personales y de Contacto</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Info icon={<FaEnvelope />} label="Correo Electrónico" value={participante.correo} />
+        {/* Card Principal */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
+          {/* Header con nombre */}
+          <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-700 dark:from-blue-900 dark:to-blue-800">
+            <h1 className="text-2xl font-bold text-white">{participante.nombre}</h1>
+          </div>
+
+          {/* Contenido */}
+          <div className="p-6 space-y-8">
+            {/* Información Personal */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Info icon={<FaUser />} label="Sexo" value={participante.sexo} />
+              <Info icon={<FaEnvelope />} label="Correo" value={participante.correo} />
               <Info icon={<FaPhone />} label="Teléfono" value={participante.telefono} />
-              <Info icon={<FaUser />} label="Edad" value={`${participante.edad} años`} />
               <Info icon={<FaIdCard />} label="CURP" value={participante.curp} />
-            </div>
-          </section>
-
-          {/* Información Profesional */}
-          <section>
-            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Información Profesional</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Info icon={<FaBuilding />} label="Empresa de Procedencia" value={participante.empresaProdecendia} />
+              <Info icon={<FaUser />} label="Edad" value={`${participante.edad} años`} />
+              <Info icon={<FaBuilding />} label="Empresa" value={participante.empresaProdecendia} />
               <Info icon={<FaBriefcase />} label="Puesto" value={participante.puesto} />
             </div>
-          </section>
 
-          {/* Sección de Certificado */}
-          <section>
-            <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">Certificado</h2>
-            
-            {/* Si ya tiene certificado */}
-            {participante.certificado ? (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaFilePdf className="text-2xl text-red-600" />
-                    <div>
-                      <p className="font-medium text-green-800 dark:text-green-200">
-                        {participante.certificado.nombre_archivo || 'Certificado.pdf'}
-                      </p>
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        Subido el: {new Date(participante.certificado.fecha_subida).toLocaleDateString()}
-                      </p>
+            {/* Cursos Inscritos */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h2 className="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4">
+                Cursos Inscritos
+              </h2>
+              <div className="space-y-4">
+                {participante?.cursos_inscritos?.length > 0 ? (
+                  participante.cursos_inscritos.map((inscripcion, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                    >
+                      <h3 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">
+                        {inscripcion.curso?.nombre || 'Nombre no disponible'}
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-1">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            Estado: <span className="font-medium">{inscripcion.estado}</span>
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            Fecha: {new Date(inscripcion.fecha_inscripcion).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-gray-600 dark:text-gray-400">
+                            Modalidad: <span className="font-medium">{inscripcion.curso?.modalidad}</span>
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            Instructor: <span className="font-medium">{inscripcion.curso?.instructor}</span>
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Botones separados para Ver y Descargar */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleViewCertificate}
-                      disabled={viewingCertificate}
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-2 rounded-lg transition text-sm"
-                      title="Ver certificado"
-                    >
-                      {viewingCertificate ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Abriendo...
-                        </>
-                      ) : (
-                        <>
-                          <FaEye />
-                          Ver
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={handleDownloadCertificate}
-                      disabled={downloadingCertificate}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-2 rounded-lg transition text-sm"
-                      title="Descargar certificado"
-                    >
-                      {downloadingCertificate ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Descargando...
-                        </>
-                      ) : (
-                        <>
-                          <FaDownload />
-                          Descargar
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">No hay cursos inscritos</p>
+                )}
               </div>
-            ) : (
-              /* Si no tiene certificado */
-              <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6">
-                <div className="text-center">
-                  <FaFilePdf className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    Este participante no tiene certificado subido
-                  </p>
-                </div>
-              </div>
-            )}
+            </div>
 
-            {/* Área de subida de certificado */}
-            <div className="mt-4 space-y-4">
-              <div className="flex items-center gap-4">
+            {/* Certificados */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h2 className="text-xl font-bold text-blue-700 dark:text-blue-400 mb-4">
+                Certificados ({participante?.certificados?.length || 0})
+              </h2>
+
+              {/* Lista de certificados existentes */}
+              {participante?.certificados?.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  {participante.certificados.map((certificado, index) => (
+                    <div 
+                      key={index}
+                      className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FaFilePdf className="text-2xl text-red-600" />
+                        <div className="flex-grow">
+                          <p className="font-medium text-green-800 dark:text-green-200">
+                            {certificado.nombre_archivo}
+                          </p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm">
+                            <p className="text-green-600 dark:text-green-400">
+                              Tipo: {certificado.tipo || 'No especificado'}
+                            </p>
+                            <p className="text-green-600 dark:text-green-400">
+                              Subido el: {new Date(certificado.fecha_subida).toLocaleDateString()}
+                            </p>
+                            {certificado.descripcion && (
+                              <p className="text-green-600 dark:text-green-400 w-full mt-1">
+                                {certificado.descripcion}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 mb-6">
+                  <div className="text-center">
+                    <FaFilePdf className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Este participante no tiene certificados subidos
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Botón para subir nuevo certificado */}
+              <div className="mt-4">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -302,34 +300,71 @@ function VerParticipante() {
                   accept=".pdf"
                   className="hidden"
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingCertificate}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg transition"
-                >
-                  <FaFilePdf />
-                  {participante.certificado ? 'Cambiar Certificado' : 'Seleccionar Certificado PDF'}
-                </button>
+                {!selectedFile && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+                  >
+                    <FaFilePdf />
+                    Subir Nuevo Certificado
+                  </button>
+                )}
               </div>
 
-              {/* Archivo seleccionado */}
+              {/* Formulario de subida cuando hay archivo seleccionado */}
               {selectedFile && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
+                <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <FaFilePdf className="text-red-600" />
                       <div>
-                        <p className="font-medium text-blue-800 dark:text-blue-200">{selectedFile.name}</p>
+                        <p className="font-medium text-blue-800 dark:text-blue-200">
+                          {selectedFile.name}
+                        </p>
                         <p className="text-sm text-blue-600 dark:text-blue-400">
                           {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Tipo de certificado *
+                        </label>
+                        <select
+                          value={tipo}
+                          onChange={(e) => setTipo(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                          required
+                        >
+                          <option value="">Selecciona un tipo</option>
+                          <option value="constancia">Constancia</option>
+                          <option value="diploma">Diploma</option>
+                          <option value="certificacion">Certificación</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Descripción (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={descripcion}
+                          onChange={(e) => setDescripcion(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                          placeholder="Añade una descripción..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
                       <button
                         onClick={handleUploadCertificate}
-                        disabled={uploadingCertificate}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-2 rounded-lg transition text-sm"
+                        disabled={uploadingCertificate || !tipo}
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-4 py-2 rounded-lg transition"
                       >
                         {uploadingCertificate ? (
                           <>
@@ -346,7 +381,7 @@ function VerParticipante() {
                       <button
                         onClick={handleCancelFileSelection}
                         disabled={uploadingCertificate}
-                        className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-3 py-2 rounded-lg transition text-sm"
+                        className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition"
                       >
                         <FaTrash />
                         Cancelar
@@ -356,51 +391,7 @@ function VerParticipante() {
                 </div>
               )}
             </div>
-          </section>
-
-          {/* Historial de Cursos */}
-          {cursosInscritos.length > 0 && (
-            <section>
-              <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-900 pb-2">
-                Historial de Cursos ({cursosInscritos.length})
-              </h2>
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-72 overflow-y-auto">
-                {cursosInscritos.map((inscripcion, index) => (
-                  <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                    <div>
-                      <Link to={`/cursos/${inscripcion.curso_id?._id}`} className="text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-2">
-                        <FaBookOpen />
-                        {inscripcion.curso_id?.nombre || 'Curso no disponible'}
-                      </Link>
-                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-                        <FaCalendarCheck />
-                        <span>Inscrito el: {new Date(inscripcion.fecha_inscripcion).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs capitalize px-2 py-1 rounded-full ${
-                        inscripcion.estado === 'inscrito' ? 'bg-blue-100 text-blue-800' :
-                        inscripcion.estado === 'completado' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {inscripcion.estado}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-           {/* Mensaje si no hay cursos */}
-           {cursosInscritos.length === 0 && (
-                <section>
-                    <div className="text-center text-gray-500 py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <FaBookOpen className="mx-auto text-4xl mb-2" />
-                        <p>Este participante aún no se ha inscrito a ningún curso.</p>
-                    </div>
-                </section>
-            )}
+          </div>
         </div>
       </div>
     </div>

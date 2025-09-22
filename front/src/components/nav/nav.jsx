@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 function Nav() {
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   const configMenuRef = useRef();
 
   // Cierra solo el menú de configuración si se hace clic fuera
@@ -35,13 +35,30 @@ function Nav() {
             <Link to="/inicio"><img className="w-50" src={Logo} alt="Logo" /></Link>
           </div>
 
-          {/* Menú de navegación */}
+          {/* Menú de navegación - Desktop */}
           <div className="hidden md:flex space-x-4 items-center relative">
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/inicio">Inicio</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/cursos">Cursos</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/usuarios">Usuarios</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/participantes">Estudiantes</Link>
-            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/empresas">Empresas</Link>
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/inicio">
+              Inicio
+            </Link>
+            
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/cursos">
+              Cursos
+            </Link>
+            
+            {/* Solo mostrar Usuarios si es admin */}
+            {isAdmin() && (
+              <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/usuarios">
+                Usuarios
+              </Link>
+            )}
+            
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/participantes">
+              Participantes
+            </Link>
+            
+            <Link className="font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700" to="/empresas">
+              Empresas
+            </Link>
 
             <button
               className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
@@ -90,10 +107,50 @@ function Nav() {
 
       {/* Menú desplegable en dispositivos móviles */}
       {showMobileMenu && (
-        <div className="md:hidden px-4 pt-2 pb-4 space-y-1 grid grid-rows-3 relative" id="mobile-menu">
-          <Link className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" to="/">Home</Link>
-          <Link className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" to="/features">Mi cuenta</Link>
-          <Link className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" to="/pricing">Documentos</Link>
+        <div className="md:hidden px-4 pt-2 pb-4 space-y-1 grid grid-rows-auto relative" id="mobile-menu">
+          <Link 
+            className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" 
+            to="/inicio"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            Inicio
+          </Link>
+          
+          <Link 
+            className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" 
+            to="/cursos"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            Cursos
+          </Link>
+          
+          {/* Solo mostrar Usuarios si es admin - Mobile */}
+          {isAdmin() && (
+            <Link 
+              className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" 
+              to="/usuarios"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              Usuarios
+            </Link>
+          )}
+          
+          <Link 
+            className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" 
+            to="/participantes"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            Participantes
+          </Link>
+          
+          <Link 
+            className="p-1 font-bold text-blue-500 hover:scale-110 transition-transform duration-200 hover:text-blue-700 text-center" 
+            to="/empresas"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            Empresas
+          </Link>
+          
           <button
             className="p-1 font-bold text-blue-500 hover:text-blue-700 text-center flex justify-center items-center"
             onClick={() => setShowConfigMenu((v) => !v)}
@@ -110,6 +167,7 @@ function Nav() {
                 onClick={() => {
                   logout();
                   setShowConfigMenu(false);
+                  setShowMobileMenu(false);
                 }}
               >
                 Logout

@@ -138,26 +138,30 @@ const deleteParticipante = async (id) => {
     }, []);
 
     // Función para subir certificado
-    const subirCertificado = async (participanteId, certificadoFile) => {
+    const subirCertificado = async (participanteId, formData) => {
         try {
-            // Validar que sea un archivo PDF
-            if (certificadoFile.type !== 'application/pdf') {
-                const error = 'Solo se permiten archivos PDF';
-                setError([error]);
-                throw new Error(error);
+            console.log('Context: Uploading certificate for participant:', participanteId); // Debug log
+            
+            // Check if formData contains the file
+            const certificadoFile = formData.get('certificado');
+            if (!certificadoFile) {
+                throw new Error('No se encontró el archivo en el FormData');
             }
 
-            // Validar tamaño del archivo (10MB máximo)
-            if (certificadoFile.size > 10 * 1024 * 1024) {
-                const error = 'El archivo PDF no puede ser mayor a 10MB';
-                setError([error]);
-                throw new Error(error);
-            }
+            // Log formData contents
+            console.log('FormData contents:', {
+                file: certificadoFile,
+                tipo: formData.get('tipo'),
+                descripcion: formData.get('descripcion')
+            });
 
-            const res = await subirCertificadoRequest(participanteId, certificadoFile);
+            const res = await subirCertificadoRequest(participanteId, formData);
+            console.log('Upload response:', res); // Debug log
+            
             setError([]);
             return res.data;
         } catch (err) {
+            console.error('Upload error in context:', err); // Detailed error logging
             const errorMessage = err.response?.data?.message || err.message || 'Error al subir el certificado';
             setError([errorMessage]);
             throw new Error(errorMessage);

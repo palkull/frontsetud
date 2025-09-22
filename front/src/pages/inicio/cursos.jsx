@@ -5,13 +5,17 @@ import { useState, useEffect } from "react";
 import { FaFilter, FaSearch, FaEye, FaTrash, FaFileExcel  } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 function Cursos() {
   const { cursos, getCursos, addCurso } = useCurso();
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [tipo, setTipo] = useState("");
   const [modalidad, setModalidad] = useState("");
+  const [mesFilter, setMesFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
   const navigate = useNavigate();
 
   // Cargar cursos al montar
@@ -19,16 +23,55 @@ function Cursos() {
     getCursos();
   }, []);
 
+  const getCurrentYear = () => new Date().getFullYear();
+
+  const getEarliestYear = () => {
+    const years = cursos
+      .map(curso => curso.createdAt ? new Date(curso.createdAt).getFullYear() : null)
+      .filter(year => year !== null);
+    return years.length > 0 ? Math.min(...years) : 2000;
+  };
+
+  const meses = [
+    { value: "1", label: "Enero" },
+    { value: "2", label: "Febrero" },
+    { value: "3", label: "Marzo" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Mayo" },
+    { value: "6", label: "Junio" },
+    { value: "7", label: "Julio" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Septiembre" },
+    { value: "10", label: "Octubre" },
+    { value: "11", label: "Noviembre" },
+    { value: "12", label: "Diciembre" }
+  ];
+
   // Filtrado
   const filteredCursos = cursos.filter(curso => {
-    const nombre = curso.nombre ? curso.nombre.toLowerCase() : "";
+    const nombre = curso.nombre?.toLowerCase() || "";
+    const modalidadCurso = curso.modalidad?.toLowerCase() || "";
+    const tipoCurso = curso.tipo?.toLowerCase() || "";
+    
+    // Get curso creation date
+    const cursoDate = curso.createdAt ? new Date(curso.createdAt) : null;
+    
     const matchesSearch = nombre.includes(search.toLowerCase());
-    const matchesTipo = tipo ? curso.tipo === tipo : true;
-    const matchesModalidad = modalidad ? curso.modalidad === modalidad : true;
-    return matchesSearch && matchesTipo && matchesModalidad;
+    const matchesModalidad = modalidad ? modalidadCurso === modalidad.toLowerCase() : true;
+    const matchesTipo = tipo ? tipoCurso === tipo.toLowerCase() : true;
+    
+    // Add date filtering
+    const matchesMes = mesFilter 
+      ? cursoDate && cursoDate.getMonth() === parseInt(mesFilter) - 1 
+      : true;
+    const matchesYear = yearFilter 
+      ? cursoDate && cursoDate.getFullYear() === parseInt(yearFilter) 
+      : true;
+    
+    return matchesSearch && matchesModalidad && matchesTipo && matchesMes && matchesYear;
   });
 
-  // Redirecciona a la página de verCurso con el id
+  // Redirecciona a la página de verCurso with el id
   const handleVerMas = (id) => {
     navigate(`/verCurso/${id}`);
   };
@@ -133,14 +176,17 @@ function Cursos() {
               />
             </label>
 
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium"
-            >
-              <FaFileExcel className="text-lg" />
-              Exportar Excel
-            </button>
+            {/* Wrap export button with isAdmin condition */}
+            {isAdmin() && (
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-900 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-all font-medium"
+              >
+                <FaFileExcel className="text-lg" />
+                Exportar Excel
+              </button>
+            )}
           </div>
         </nav>
 
@@ -178,45 +224,88 @@ function Cursos() {
               </button>
             </div>
             {showFilters && (
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div>
-                  <label className="block text-sm text-blue-700 dark:text-blue-300 mb-1">Tipo</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg shadow-inner">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Tipo
+                  </label>
                   <select
                     value={tipo}
                     onChange={e => setTipo(e.target.value)}
-                    className="px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-blue-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm"
                   >
-                    <option value="">Todos</option>
+                    <option value="">Todos los tipos</option>
                     <option value="curso">Curso</option>
-                    <option value="evaluacion">Evaluación</option>
+                    <option value="taller">Taller</option>
                     <option value="certificacion">Certificación</option>
-                    <option value="diplomado">Diplomado</option>
-                    <option value="distintivo">Distintivo</option>
-                    <option value="seminario">Seminario</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm text-blue-700 dark:text-blue-300 mb-1">Modalidad</label>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Modalidad
+                  </label>
                   <select
                     value={modalidad}
                     onChange={e => setModalidad(e.target.value)}
-                    className="px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-blue-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm"
                   >
-                    <option value="">Todas</option>
+                    <option value="">Todas las modalidades</option>
                     <option value="presencial">Presencial</option>
-                    <option value="online">Online</option>
+                    <option value="virtual">Virtual</option>
                     <option value="hibrido">Híbrido</option>
                   </select>
                 </div>
-                <div className="flex items-end">
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Mes
+                  </label>
+                  <select
+                    value={mesFilter}
+                    onChange={e => setMesFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-blue-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm"
+                  >
+                    <option value="">Todos los meses</option>
+                    {meses.map(mes => (
+                      <option key={mes.value} value={mes.value}>{mes.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Año
+                  </label>
+                  <select
+                    value={yearFilter}
+                    onChange={e => setYearFilter(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-blue-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white text-sm"
+                  >
+                    <option value="">Todos los años</option>
+                    {Array.from(
+                      { length: getCurrentYear() - getEarliestYear() + 1 },
+                      (_, i) => getCurrentYear() - i
+                    ).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end lg:col-span-4">
                   <button
                     onClick={() => {
                       setTipo("");
                       setModalidad("");
+                      setMesFilter("");
+                      setYearFilter("");
                       setSearch("");
                     }}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition"
+                    className="w-full px-4 py-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-sm"
                   >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     Limpiar filtros
                   </button>
                 </div>

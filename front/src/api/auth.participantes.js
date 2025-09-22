@@ -27,14 +27,15 @@ export const getHistorialParticipantesRequest = async () => {
 };
 
 // subir certificado a un participante específico
-export const subirCertificadoRequest = (participanteId, certificadoFile) => {
-    const formData = new FormData();
-    formData.append('certificado', certificadoFile);
-    
+export const subirCertificadoRequest = (participanteId, formData) => {
+    console.log('Sending request to:', `/participantes/participante/${participanteId}/certificado`); // Debug log
     return axios.post(`/participantes/participante/${participanteId}/certificado`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress: (progressEvent) => {
+            console.log('Upload progress:', Math.round((progressEvent.loaded * 100) / progressEvent.total));
+        }
     });
 };
 
