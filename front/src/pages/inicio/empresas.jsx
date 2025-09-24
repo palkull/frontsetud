@@ -217,7 +217,7 @@ function Empresas() {
           <div className="flex items-center gap-4">
             {/* Botones visibles para todos los usuarios */}
             <button
-              onClick={() => navigate('/empresa/agregar')}
+              onClick={() => navigate('/add-empresas')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
