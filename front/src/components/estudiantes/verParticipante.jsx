@@ -30,17 +30,29 @@ function VerParticipante() {
       
       // Normalizar la estructura de certificados
       let certificados = [];
-      if (data.certificados && Array.isArray(data.certificados)) {
+      
+      // Verificar si existe certificados como array
+      if (data.certificados && Array.isArray(data.certificados) && data.certificados.length > 0) {
         certificados = data.certificados;
-      } else if (data.certificado) {
-        // Si viene como objeto singular, lo convertimos a array
+        console.log("Certificados encontrados como array:", certificados);
+      } 
+      // Si no hay array de certificados pero existe certificado singular
+      else if (data.certificado && typeof data.certificado === 'object') {
         certificados = [data.certificado];
+        console.log("Certificado encontrado como objeto singular, convertido a array:", certificados);
+      }
+      // Si no hay ningún certificado
+      else {
+        certificados = [];
+        console.log("No se encontraron certificados");
       }
       
       setParticipante({
         ...data,
         certificados: certificados
       });
+      
+      console.log("Estado final de certificados:", certificados);
     } catch (error) {
       console.error("Error al cargar participante:", error);
     } finally {
@@ -215,7 +227,7 @@ function VerParticipante() {
                       className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
                     >
                       <h3 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">
-                        {inscripcion.curso?.nombreCurso || 'Nombre no disponible'}
+                        {inscripcion.nombreCurso}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="space-y-1">
@@ -226,14 +238,8 @@ function VerParticipante() {
                             Fecha: {new Date(inscripcion.fecha_inscripcion).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-gray-600 dark:text-gray-400">
-                            Modalidad: <span className="font-medium">{inscripcion.curso?.modalidad}</span>
-                          </p>
-                          <p className="text-gray-600 dark:text-gray-400">
-                            Instructor: <span className="font-medium">{inscripcion.curso?.instructor}</span>
-                          </p>
-                        </div>
+                
+                      
                       </div>
                     </div>
                   ))
@@ -276,6 +282,24 @@ function VerParticipante() {
                               </p>
                             )}
                           </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            certificado.estado === 'activo' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {certificado.estado || 'activo'}
+                          </span>
+                          {certificado.url && (
+                            <button
+                              onClick={() => handleDownloadCertificate(certificado)}
+                              className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg transition"
+                              title="Ver certificado"
+                            >
+                              <FaEye />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
