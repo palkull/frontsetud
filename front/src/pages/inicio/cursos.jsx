@@ -49,7 +49,7 @@ function Cursos() {
 
   // Filtrado
   const filteredCursos = cursos.filter(curso => {
-    const nombre = curso.nombre?.toLowerCase() || "";
+    const nombre = curso.nombreCurso?.toLowerCase() || "";
     const modalidadCurso = curso.modalidad?.toLowerCase() || "";
     const tipoCurso = curso.tipo?.toLowerCase() || "";
     
@@ -134,7 +134,7 @@ function Cursos() {
     }
 
     const dataToExport = filteredCursos.map(curso => ({
-      'Nombre': curso.nombre,
+      'Nombre': curso.nombreCurso,
       'Tipo': curso.tipo,
       'Modalidad': curso.modalidad,
       'Fecha Inicio': curso.fechaInicio ? new Date(curso.fechaInicio).toLocaleDateString('es-MX') : 'N/A',
@@ -326,7 +326,7 @@ function Cursos() {
                 <tbody className="divide-y divide-blue-100">
                   {filteredCursos.map(curso => (
                     <tr key={curso._id || curso.id} className="hover:bg-blue-50 dark:hover:bg-gray-700 transition">
-                      <td className="px-4 py-2 font-semibold text-blue-700 dark:text-blue-300">{curso.nombre}</td>
+                      <td className="px-4 py-2 font-semibold text-blue-700 dark:text-blue-300">{curso.nombreCurso}</td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{curso.tipo}</td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{curso.modalidad}</td>
                       <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
