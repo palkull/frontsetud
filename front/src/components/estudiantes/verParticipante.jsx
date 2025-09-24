@@ -214,7 +214,7 @@ function VerParticipante() {
                       className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
                     >
                       <h3 className="font-semibold text-blue-700 dark:text-blue-400 mb-2">
-                        {inscripcion.curso?.nombre || 'Nombre no disponible'}
+                        {inscripcion.curso?.nombreCurso || 'Nombre no disponible'}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="space-y-1">
