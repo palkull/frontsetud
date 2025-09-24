@@ -22,7 +22,9 @@ function VerCurso() {
     try {
       setLoading(true);
       const cursoData = await getCurso(id);
+      
       setCurso(cursoData);
+      console.log("Curso loaded:", cursoData);
     } catch (error) {
       console.error("Error loading curso:", error);
       setCurso(null);
@@ -332,10 +334,11 @@ function VerCurso() {
     </h2>
     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-60 overflow-y-auto">
       {curso.participantes.map((participante, index) => (
+        console.log("Participante en curso:", curso.participantes.length, participante.participante_info.nombre),
         <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
           <div>
             <span className="text-gray-700 dark:text-gray-200 font-medium">
-              {participante.participante_id?.nombre || `Participante ${index + 1}`}
+              {participante.participante_id?.nombre || participante.participante_info?.nombre || "Nombre no disponible"}
             </span>
             <br />
             {/* Mostrar empresa de procedencia */}

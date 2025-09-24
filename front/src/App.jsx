@@ -54,7 +54,7 @@ function App() {
               <Route path="/add-usuarios" element={<AddUsuarios />} />
               <Route path="/historial-usuarios" element={<HistorialUsuarios />} />
 
-              <Route path="/verCurso/:id" element={<VerCurso />} /> {/* <-- Cambia esto */}
+              <Route path="/verCurso/:id" element={<VerCurso />} />
               <Route path="/add-cursos" element={<AddCursos />} />
               <Route path="/cursos" element={<Cursos />} />
             </Route>  
