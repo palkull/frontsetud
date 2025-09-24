@@ -130,6 +130,7 @@ const deleteParticipante = async (id) => {
     const getParticipante = useCallback(async (id) => {
         try {
             const res = await getParticipanteRequest(id);
+            console.log('Participante fetched:', res.data);
             return res.data;
         } catch (error) {
             console.error("Error al obtener el participante:", error);

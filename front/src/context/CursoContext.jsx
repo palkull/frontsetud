@@ -77,6 +77,7 @@ export function CursoProvider({ children }) {
         throw err;
     }
 }, []);
+
     const deleteCurso = async (cursoId) => {
         try {
             await deleteCursoRequest({ id: cursoId });

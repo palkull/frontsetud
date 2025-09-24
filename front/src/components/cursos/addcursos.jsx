@@ -61,9 +61,9 @@ function AddCursos() {
                                     type="text"
                                     placeholder="Nombre del curso"
                                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-                                    {...register("nombre", { required: "El nombre del curso es obligatorio" })}
+                                    {...register("nombreCurso", { required: "El nombre del curso es obligatorio" })}
                                 />
-                                {errors.nombre && <span className="text-red-500 text-xs">{errors.nombre.message}</span>}
+                                {errors.nombreCurso && <span className="text-red-500 text-xs">{errors.nombreCurso.message}</span>}
                             </div>
                             <div>
                                 <select

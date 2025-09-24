@@ -75,6 +75,7 @@ function VerCurso() {
       setShowInscriptionModal(false);
       setSelectedParticipantes([]);
       await loadCursoData();
+      
     } catch (error) {
       toast.error("Error al inscribir participantes");
       console.error(error);
